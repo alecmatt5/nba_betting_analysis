@@ -76,6 +76,7 @@ matplotlib-inline==0.1.6
 mccabe==0.7.0
 mistune==2.0.5
 multidict==6.0.4
+nba-api==1.1.14
 nbclassic==0.5.2
 nbclient==0.7.2
 nbconvert==7.2.9
