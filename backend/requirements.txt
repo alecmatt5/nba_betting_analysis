@@ -156,3 +156,4 @@ wrapt==1.15.0
 y-py==0.5.9
 yarl==1.8.2
 ypy-websocket==0.8.2
+ngboost==0.3.13
