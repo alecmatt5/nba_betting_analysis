@@ -47,14 +47,45 @@ def get_basic_boxscores(date="2018-09-01"):
 
     return games
 
-def preprocess_advanced(file_to_save, adv_filename):
+def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=[]):
+        df_rolling = df[selected_columns + ["TEAM_ABBREVIATION"]]
+        df_rolling = df_rolling.groupby(["TEAM_ABBREVIATION"], group_keys=False)
+
+        def find_team_averages(team):
+            return team.rolling(roll_number).mean()
+
+        def find_team_medians(team):
+            return team.rolling(roll_number).median()
+
+        def find_team_stds(team):
+            return team.rolling(roll_number).std()
+
+        if procedure == 'median':
+            df_rolling = df_rolling.apply(find_team_medians)
+        elif procedure == 'std':
+            df_rolling = df_rolling.apply(find_team_stds)
+        else:
+            procedure = 'mean'
+            df_rolling = df_rolling.apply(find_team_averages)
+
+        df_rolling = df_rolling[selected_columns]
+        df_rolling = df_rolling.sort_index()
+
+        new_column_names = {}
+        for col in df_rolling.columns:
+            new_column_names[col] = col + suff + '_' + procedure
+
+        df_rolling = df_rolling.rename(columns=new_column_names)
+        return df_rolling
+
+def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
     #get basic boxscore data to add columns to the advanced boxscore
     basic = get_data('/backend/data/pkl/raw_games_5yrs.pkl')
     basic = basic.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
-    games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PTS', 'PLUS_MINUS']].copy()
+    games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PLUS_MINUS']].copy()
 
     #get advanced boxscore data from pickle
-    advanced = get_data(f'/backend/data/pkl/{adv_filename}')
+    advanced = get_data(f'/backend/data/pkl/{adv_pickle_filename}')
 
     #drop unecessary columns
     columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
@@ -74,16 +105,24 @@ def preprocess_advanced(file_to_save, adv_filename):
     advanced = advanced[~advanced['GAME_ID'].isin(unique_values)].reset_index(drop=True)
     advanced_desc = advanced.sort_values(by=['GAME_DATE'], ascending=True).copy()
 
-    #caluculate rolling average
-    rolling_features = ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'AST_PCT',
-       'AST_TOV', 'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'TM_TOV_PCT', 'EFG_PCT',
-       'TS_PCT', 'PACE', 'POSS']
-    advanced_desc = advanced_desc.groupby('TEAM_ABBREVIATION', as_index=False, group_keys=False)[rolling_features].rolling(5).mean()
-    advanced_desc.drop(columns=['TEAM_ABBREVIATION']).sort_index()
-    advanced[rolling_features] = advanced_desc.drop(columns=['TEAM_ABBREVIATION']).sort_index()
-    advanced = advanced.sort_values(by=['GAME_DATE', 'GAME_ID', 'HOME_TEAM'], ascending=False).reset_index(drop=True)
+    #define features to engineer
+    non_eng_features = ['TEAM_ABBREVIATION', 'GAME_ID', 'TEAM_ID', 'TEAM_NAME',
+                        'GAME_DATE', 'HOME_TEAM', 'PLUS_MINUS']
+    eng_features = advanced_desc.drop(columns=non_eng_features).columns.tolist()
+
+    #caluculate rolling metrics
+    if 'mean' in roll_methods:
+        df_temp = roll(df = advanced_desc, roll_number=5, procedure='mean', selected_columns=eng_features)
+        advanced = advanced.merge(df_temp, left_index=True, right_index=True)
+    if 'median' in roll_methods:
+        df_temp = roll(df = advanced_desc, roll_number=5, procedure='median', selected_columns=eng_features)
+        advanced = advanced.merge(df_temp, left_index=True, right_index=True)
+    if 'std' in roll_methods:
+        df_temp = roll(df = advanced_desc, roll_number=5, procedure='median', selected_columns=eng_features)
+        advanced = advanced.merge(df_temp, left_index=True, right_index=True)
 
     #split data frame between the home teams and the away teams
+    advanced = advanced.sort_values(by=['GAME_DATE', 'GAME_ID', 'HOME_TEAM'], ascending=False).reset_index(drop=True)
     adv_home = advanced.iloc[::2].copy()
     adv_away = advanced.iloc[1::2].copy()
 
@@ -97,88 +136,59 @@ def preprocess_advanced(file_to_save, adv_filename):
         columns_to_merge.append(column + '_a')
         columns_away[column] = column + '_a'
         columns_home[column] = column + '_h'
-    columns_to_merge.append('GAME_ID')
+    #merge the home and away data frames on to the same game id
     adv_away.rename(columns=columns_away, inplace=True)
     adv_home.rename(columns=columns_home, inplace=True)
-
-    #merge the home and away data frames on to the same game id
+    columns_to_merge.append('GAME_ID')
     merged_df = adv_home.merge(adv_away[columns_to_merge], on=['GAME_ID'])
     merged_df = merged_df.dropna()
 
-    #reorder the columns
-    merged_df = merged_df[['GAME_ID', 'GAME_DATE', 'TEAM_ID_h', 'TEAM_NAME_h',
-       'TEAM_ABBREVIATION_h', 'HOME_TEAM_h', 'OFF_RATING_h', 'DEF_RATING_h',
-       'NET_RATING_h', 'AST_PCT_h', 'AST_TOV_h', 'OREB_PCT_h', 'DREB_PCT_h',
-       'REB_PCT_h', 'TM_TOV_PCT_h', 'EFG_PCT_h', 'TS_PCT_h', 'PACE_h',
-       'POSS_h', 'PTS_h', 'TEAM_ID_a', 'TEAM_NAME_a',
-       'TEAM_ABBREVIATION_a', 'HOME_TEAM_a', 'OFF_RATING_a', 'DEF_RATING_a',
-       'NET_RATING_a', 'AST_PCT_a', 'AST_TOV_a', 'OREB_PCT_a', 'DREB_PCT_a',
-       'REB_PCT_a', 'TM_TOV_PCT_a', 'EFG_PCT_a', 'TS_PCT_a', 'PACE_a',
-       'POSS_a', 'PTS_a', 'PLUS_MINUS']]
-
     #make lists of feature column names
-    X_features_num = ['OFF_RATING_h', 'DEF_RATING_h',
-       'NET_RATING_h', 'AST_PCT_h', 'AST_TOV_h', 'OREB_PCT_h', 'DREB_PCT_h',
-       'REB_PCT_h', 'TM_TOV_PCT_h', 'EFG_PCT_h', 'TS_PCT_h', 'PACE_h',
-       'POSS_h', 'OFF_RATING_a', 'DEF_RATING_a',
-       'NET_RATING_a', 'AST_PCT_a', 'AST_TOV_a', 'OREB_PCT_a', 'DREB_PCT_a',
-       'REB_PCT_a', 'TM_TOV_PCT_a', 'EFG_PCT_a', 'TS_PCT_a', 'PACE_a',
-       'POSS_a']
-    X_features_cat = ['TEAM_ABBREVIATION_h', 'TEAM_ABBREVIATION_a']
+    X_features_num = [col for col in merged_df.columns if 'GAME_ID' not in col
+                     and 'GAME_DATE' not in col
+                     and 'TEAM_ID' not in col
+                     and 'TEAM_NAME' not in col
+                     and 'TEAM_ABBREVIATION' not in col
+                     and 'PLUS_MINUS' not in col
+                     and 'HOME_TEAM' not in col]
 
+    X_features_cat = ['TEAM_ABBREVIATION_h', 'TEAM_ABBREVIATION_a']
     #scale the numerical features
-    X = merged_df.copy()
+    preproc_data = merged_df.copy()
     scaler = MinMaxScaler()
-    X[X_features_num] = scaler.fit_transform(X[X_features_num])
+    preproc_data[X_features_num] = scaler.fit_transform(preproc_data[X_features_num])
 
     #one hot encode the teams
-    ohe = OneHotEncoder(sparse=False)
-    ohe.fit(X[X_features_cat])
-    cols = [str(team) +'_h' for team in ohe.categories_[0]] + [str(team) +'_a' for team in ohe.categories_[1]]
-    X[cols]=ohe.transform(X[X_features_cat])
-
-    #reorder the columns
-    X = X[['GAME_ID', 'GAME_DATE', 'TEAM_ID_h', 'TEAM_NAME_h',
-       'TEAM_ABBREVIATION_h', 'HOME_TEAM_h', 'OFF_RATING_h', 'DEF_RATING_h',
-       'NET_RATING_h', 'AST_PCT_h', 'AST_TOV_h', 'OREB_PCT_h', 'DREB_PCT_h',
-       'REB_PCT_h', 'TM_TOV_PCT_h', 'EFG_PCT_h', 'TS_PCT_h', 'PACE_h',
-       'POSS_h', 'PTS_h', 'TEAM_ID_a', 'TEAM_NAME_a', 'TEAM_ABBREVIATION_a',
-       'HOME_TEAM_a', 'OFF_RATING_a', 'DEF_RATING_a', 'NET_RATING_a',
-       'AST_PCT_a', 'AST_TOV_a', 'OREB_PCT_a', 'DREB_PCT_a', 'REB_PCT_a',
-       'TM_TOV_PCT_a', 'EFG_PCT_a', 'TS_PCT_a', 'PACE_a', 'POSS_a', 'PTS_a',
-       'ATL_h', 'BKN_h', 'BOS_h', 'CHA_h', 'CHI_h', 'CLE_h',
-       'DAL_h', 'DEN_h', 'DET_h', 'GSW_h', 'HOU_h', 'IND_h', 'LAC_h', 'LAL_h',
-       'MEM_h', 'MIA_h', 'MIL_h', 'MIN_h', 'NOP_h', 'NYK_h', 'OKC_h', 'ORL_h',
-       'PHI_h', 'PHX_h', 'POR_h', 'SAC_h', 'SAS_h', 'TOR_h', 'UTA_h', 'WAS_h',
-       'ATL_a', 'BKN_a', 'BOS_a', 'CHA_a', 'CHI_a', 'CLE_a', 'DAL_a', 'DEN_a',
-       'DET_a', 'GSW_a', 'HOU_a', 'IND_a', 'LAC_a', 'LAL_a', 'MEM_a', 'MIA_a',
-       'MIL_a', 'MIN_a', 'NOP_a', 'NYK_a', 'OKC_a', 'ORL_a', 'PHI_a', 'PHX_a',
-       'POR_a', 'SAC_a', 'SAS_a', 'TOR_a', 'UTA_a', 'WAS_a', 'PLUS_MINUS']]
-
-    #define the features
-    X_features = ['HOME_TEAM_h', 'OFF_RATING_h', 'DEF_RATING_h',
-       'NET_RATING_h', 'AST_PCT_h', 'AST_TOV_h', 'OREB_PCT_h', 'DREB_PCT_h',
-       'REB_PCT_h', 'TM_TOV_PCT_h', 'EFG_PCT_h', 'TS_PCT_h', 'PACE_h', 'POSS_h',
-       'HOME_TEAM_a', 'OFF_RATING_a', 'DEF_RATING_a', 'NET_RATING_a',
-       'AST_PCT_a', 'AST_TOV_a', 'OREB_PCT_a', 'DREB_PCT_a', 'REB_PCT_a',
-       'TM_TOV_PCT_a', 'EFG_PCT_a', 'TS_PCT_a', 'PACE_a', 'POSS_a',
-       'ATL_h', 'BKN_h', 'BOS_h', 'CHA_h', 'CHI_h', 'CLE_h', 'DAL_h', 'DEN_h',
-       'DET_h', 'GSW_h', 'HOU_h', 'IND_h', 'LAC_h', 'LAL_h', 'MEM_h', 'MIA_h',
-       'MIL_h', 'MIN_h', 'NOP_h', 'NYK_h', 'OKC_h', 'ORL_h', 'PHI_h', 'PHX_h',
-       'POR_h', 'SAC_h', 'SAS_h', 'TOR_h', 'UTA_h', 'WAS_h', 'ATL_a', 'BKN_a',
-       'BOS_a', 'CHA_a', 'CHI_a', 'CLE_a', 'DAL_a', 'DEN_a', 'DET_a', 'GSW_a',
-       'HOU_a', 'IND_a', 'LAC_a', 'LAL_a', 'MEM_a', 'MIA_a', 'MIL_a', 'MIN_a',
-       'NOP_a', 'NYK_a', 'OKC_a', 'ORL_a', 'PHI_a', 'PHX_a', 'POR_a', 'SAC_a',
-       'SAS_a', 'TOR_a', 'UTA_a', 'WAS_a']
+    if ohe == True:
+        ohe = OneHotEncoder(sparse=False)
+        ohe.fit(preproc_data[X_features_cat])
+        cols = [str(team) +'_h' for team in ohe.categories_[0]] + [str(team) +'_a' for team in ohe.categories_[1]]
+        preproc_data[cols]=ohe.transform(preproc_data[X_features_cat])
+        X_features = [col for col in preproc_data.columns if 'GAME_ID' not in col
+                     and 'GAME_DATE' not in col
+                     and 'TEAM_ID' not in col
+                     and 'TEAM_NAME' not in col
+                     and 'TEAM_ABBREVIATION' not in col
+                     and 'PLUS_MINUS' not in col
+                     and 'HOME_TEAM' not in col]
+    else:
+        X_features = [col for col in preproc_data.columns if 'GAME_ID' not in col
+                     and 'GAME_DATE' not in col
+                     and 'TEAM_ID' not in col
+                     and 'TEAM_NAME' not in col
+                     and 'PLUS_MINUS' not in col
+                     and 'HOME_TEAM' not in col]
 
     #define and return X and y
-    X_preproc = X[X_features]
-    y = X['PLUS_MINUS']
+    X_preproc = preproc_data[X_features]
+    y = preproc_data['PLUS_MINUS']
 
-    X_preproc.to_pickle(f'../data/pkl/X_preproc{file_to_save}')
-    y.to_pickle(f'../data/pkl/y{file_to_save}')
+    return X_preproc, y
 
-    return
-
-if __name__ == '__main__':
-    preprocess_advanced('boxscores_rolling_advanced_part2', 'boxscores_advanced_team_part2')
+# if __name__ == '__main__':
+#     X_preproc1, y1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
+#     X_preproc2, y2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
+#     X_preproc = pd.concat([X_preproc1, X_preproc2]).reset_index(drop=True)
+#     y = pd.concat([y1, y2]).reset_index(drop=True)
+#     X_preproc.to_pickle('X_ADV_XGBOOST_TEAM_ALL')
+#     y.to_pickle('y_ADV_XGBOOST_TEAM_ALL')
