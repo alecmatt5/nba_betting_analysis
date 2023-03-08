@@ -1,7 +1,11 @@
 import pandas as pd
 import numpy as np
+import requests
+from nba_api.stats.static import teams
+from nba_api.stats.endpoints import leaguegamefinder
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
+from datetime import datetime, timedelta
 
 def get_data(filename):
     if '.csv' in filename:
@@ -11,14 +15,45 @@ def get_data(filename):
     else:
         return None
 
+def get_basic_boxscores(date="2018-09-01"):
+    nba_teams = teams.get_teams()
+    team_names = [team['full_name'] for team in nba_teams]
+    team_names.sort()
+    team_ids = [team['id'] for team in nba_teams]
+
+    games = None
+    for ids in team_ids:
+        if games is None:
+            gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
+            games = gamefinder.get_data_frames()[0]
+        else:
+            gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
+            games = pd.concat([games, gamefinder.get_data_frames()[0]])
+
+    games.GAME_ID = pd.to_numeric(games.GAME_ID, downcast='integer')
+    games.GAME_DATE = pd.to_datetime(games.GAME_DATE, infer_datetime_format=True)
+
+    today = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
+    games = games[games['GAME_DATE'] < today]
+    games = games[games['GAME_DATE'] > date].sort_values(by='GAME_DATE', ascending=False)
+
+    games.reset_index(drop=True, inplace=True)
+
+    games.sort_values(by='GAME_ID', ascending=False)
+    games['HOME_TEAM'] = 0
+    games.loc[games['MATCHUP'].str.contains('vs.'), ['HOME_TEAM']] = 1
+    games.loc[games['HOME_TEAM'] == 1, :]
+
+    return games
+
 def preprocess_advanced(adv_filename):
     #get basic boxscore data to add columns to the advanced boxscore
-    basic = get_data('../data/pkl/raw_games_5yrs.pkl')
+    basic = get_data('../data/pkl/raw/raw_games_5yrs.pkl')
     basic = basic.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
     games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PTS', 'PLUS_MINUS']].copy()
 
     #get advanced boxscore data from pickle
-    advanced = get_data(f'../data/pkl/{adv_filename}')
+    advanced = get_data(f'../data/pkl/raw/{adv_filename}')
 
     #drop unecessary columns
     columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
