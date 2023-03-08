@@ -82,6 +82,7 @@ nbclient==0.7.2
 nbconvert==7.2.9
 nbformat==5.7.3
 nest-asyncio==1.5.6
+ngboost==0.3.13
 notebook==6.5.2
 notebook_shim==0.2.2
 numpy==1.24.2
