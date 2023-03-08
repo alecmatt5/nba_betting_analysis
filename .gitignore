@@ -128,6 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+
+# csv_files
+sportsbook_sample.csv
+=======
 .DS_Store
 raw_data/
 *.csv
