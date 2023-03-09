@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import requests
+import os
 from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguegamefinder
 from sklearn.preprocessing import MinMaxScaler
@@ -8,10 +8,11 @@ from sklearn.preprocessing import OneHotEncoder
 from datetime import datetime, timedelta
 
 def get_data(filename):
+    path = os.getcwd()
     if '.csv' in filename:
-        return pd.read_csv(filename)
+        return pd.read_csv(path + filename)
     elif '.pkl' in filename:
-        return pd.read_pickle(filename)
+        return pd.read_pickle(path + filename)
     else:
         return None
 
@@ -46,14 +47,14 @@ def get_basic_boxscores(date="2018-09-01"):
 
     return games
 
-def preprocess_advanced(adv_filename):
+def preprocess_advanced(file_to_save, adv_filename):
     #get basic boxscore data to add columns to the advanced boxscore
-    basic = get_data('../data/pkl/raw/raw_games_5yrs.pkl')
+    basic = get_data('/backend/data/pkl/raw_games_5yrs.pkl')
     basic = basic.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
     games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PTS', 'PLUS_MINUS']].copy()
 
     #get advanced boxscore data from pickle
-    advanced = get_data(f'../data/pkl/raw/{adv_filename}')
+    advanced = get_data(f'/backend/data/pkl/{adv_filename}')
 
     #drop unecessary columns
     columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
@@ -174,4 +175,10 @@ def preprocess_advanced(adv_filename):
     X_preproc = X[X_features]
     y = X['PLUS_MINUS']
 
-    return X_preproc, y
+    X_preproc.to_pickle(f'../data/pkl/X_preproc{file_to_save}')
+    y.to_pickle(f'../data/pkl/y{file_to_save}')
+
+    return
+
+if __name__ == '__main__':
+    preprocess_advanced('boxscores_rolling_advanced_part2', 'boxscores_advanced_team_part2')
