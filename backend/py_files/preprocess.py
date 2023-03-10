@@ -186,7 +186,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
 
     return preproc_data
 if __name__ == '__main__':
-    preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
-    preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
+    preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=True)
+    preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=True)
     preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
-    preproc_all.to_pickle('ADV_XGBOOST_TEAM_ALL')
+    preproc_all.to_pickle('ADV_OHE_TEAM_ALL')
