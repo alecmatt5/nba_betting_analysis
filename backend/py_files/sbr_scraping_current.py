@@ -2,24 +2,21 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import time
+from datetime import datetime, timedelta
+def get_bets():
+    date = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
 
-games = pd.read_pickle('backend/data/pkl/raw_games_5yrs.pkl')
-games['GAME_DATE'] = games['GAME_DATE'].dt.strftime('%Y-%m-%d')
-dates = games[games['GAME_DATE'] > '2019-10-01'].sort_values('GAME_DATE', ascending=False)['GAME_DATE'].unique().tolist()
-
-first = True
-for date in dates:
     time.sleep(4)
-    URL = f"https://www.sportsbookreview.com/betting-odds/nba-basketball/?date={date}"
+    URL = f"https://www.sportsbookreview.com/betting-odds/nba-basketball/"
     headers = {"User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0"}
 
-    page = requests.get(url=URL) #headers=headers)
+    page = requests.get(url=URL, headers=headers)
     soup = BeautifulSoup(page.content, 'html.parser')
 
     teams = soup.find_all(class_='GameRows_participantBox__0WCRz')
     spread = soup.find_all(class_="OddsCells_compact__cawia border-left")
     wager_percentage = soup.find_all("span", class_="opener")
-    scores = soup.find_all(class_ = 'GameRows_scores__YkN24')
+    #scores = soup.find_all(class_ = 'GameRows_scores__YkN24')
     opening_spread = soup.find_all(class_='GameRows_adjust__NZn2m GameRows_opener__NivKJ')
 
     temp = []
@@ -66,24 +63,34 @@ for date in dates:
         else:
             opponent = teams[i-1].text
             home = 1
-        row.append([date, teams[i].text, home, opponent, scores[i].text, wager_percentage[i].text, opening_spread[i].text, '-110'])
+        row.append([date, teams[i].text, home, opponent, wager_percentage[i].text, opening_spread[i].text, '-110']) #scores[i].text
 
-    df_1 = pd.DataFrame(row, columns=['Game_Date', 'Team_Name', 'Home', 'Opponent', 'Points', 'Pct_of_Bets', 'Opening_Spread', 'Opening_Odds'])
+    df_1 = pd.DataFrame(row, columns=['Game_Date', 'Team_Name', 'Home', 'Opponent', 'Pct_of_Bets', 'Opening_Spread', 'Opening_Odds'])
 
-    columns = ['Betmgm', 'Betmgm_Odds', 'Draft_Kings_Odds', 'Draft_Kings_Odds',
-            'Fanduel_Odds', 'Fanduel_Odds', 'Caesars_Odds', 'Caesars_Odds',
-            'Pointsbet_Odds', 'Pointsbet_Odds', 'Wynn_Odds', 'Wynn_Odds',
-            'Betrivers_Odds', 'Betrivers_Odds']
+    columns = ['Betmgm_Spread', 'Betmgm_Odds', 'Draft_Kings_Spread', 'Draft_Kings_Odds',
+            'Fanduel_Spread', 'Fanduel_Odds', 'Caesars_Spread', 'Caesars_Odds',
+            'Pointsbet_Spread', 'Pointsbet_Odds', 'Wynn_Spread', 'Wynn_Odds',
+            'Betrivers_Spread', 'Betrivers_Odds']
 
     df_2 = pd.DataFrame(rows_to_add, columns=columns)
 
-    new_df = df_1.merge(df_2, left_index=True, right_index=True)
+    betting_df = df_1.merge(df_2, left_index=True, right_index=True) #new_df
 
-    if new_df.shape[0] != 0:
-        if first == True:
-            betting_df = new_df
-            first = False
-        else:
-            betting_df = pd.concat([betting_df, new_df])
-    print(f'{date} scraped')
-betting_df.to_pickle('sbr_betting_data.pkl')
+    # if new_df.shape[0] != 0:
+    #     if first == True:
+    #         betting_df = new_df
+    #         first = False
+    #     else:
+    #         betting_df = pd.concat([betting_df, new_df])
+
+    #betting_df.reset_index(drop=True, inplace=True)
+    #betting_df.to_pickle('sbr_betting_data.pkl')
+
+    #TEMPORARY!!!
+    betting_df.to_pickle(f'sbr_current_betting_data_{date}.pkl')
+
+    return betting_df
+
+#TEMPORARY!!!
+# if __name__ == '__main__':
+#     get_bets()
