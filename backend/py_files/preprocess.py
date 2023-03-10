@@ -118,7 +118,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
         df_temp = roll(df = advanced_desc, roll_number=5, procedure='median', selected_columns=eng_features)
         advanced = advanced.merge(df_temp, left_index=True, right_index=True)
     if 'std' in roll_methods:
-        df_temp = roll(df = advanced_desc, roll_number=5, procedure='median', selected_columns=eng_features)
+        df_temp = roll(df = advanced_desc, roll_number=5, procedure='std', selected_columns=eng_features)
         advanced = advanced.merge(df_temp, left_index=True, right_index=True)
 
     #split data frame between the home teams and the away teams
