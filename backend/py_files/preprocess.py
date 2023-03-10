@@ -180,15 +180,13 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
                      and 'HOME_TEAM' not in col]
 
     #define and return X and y
-    X_preproc = preproc_data[X_features]
-    y = preproc_data['PLUS_MINUS']
+    # X_preproc = preproc_data[X_features]
+    # y = preproc_data['PLUS_MINUS']
+    print(X_features)
 
-    return X_preproc, y
-
-# if __name__ == '__main__':
-#     X_preproc1, y1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
-#     X_preproc2, y2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
-#     X_preproc = pd.concat([X_preproc1, X_preproc2]).reset_index(drop=True)
-#     y = pd.concat([y1, y2]).reset_index(drop=True)
-#     X_preproc.to_pickle('X_ADV_XGBOOST_TEAM_ALL')
-#     y.to_pickle('y_ADV_XGBOOST_TEAM_ALL')
+    return preproc_data
+if __name__ == '__main__':
+    preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
+    preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=False)
+    preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
+    preproc_all.to_pickle('ADV_XGBOOST_TEAM_ALL')
