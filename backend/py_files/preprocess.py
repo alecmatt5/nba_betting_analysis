@@ -52,13 +52,13 @@ def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=
         df_rolling = df_rolling.groupby(["TEAM_ABBREVIATION"], group_keys=False)
 
         def find_team_averages(team):
-            return team.rolling(roll_number).mean()
+            return team.rolling(roll_number, closed='left').mean()
 
         def find_team_medians(team):
-            return team.rolling(roll_number).median()
+            return team.rolling(roll_number, closed='left').median()
 
         def find_team_stds(team):
-            return team.rolling(roll_number).std()
+            return team.rolling(roll_number, closed='left').std()
 
         if procedure == 'median':
             df_rolling = df_rolling.apply(find_team_medians)
@@ -78,7 +78,7 @@ def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=
         df_rolling = df_rolling.rename(columns=new_column_names)
         return df_rolling
 
-def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
+def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, scaled=True):
     #get basic boxscore data to add columns to the advanced boxscore
     basic = get_data('/backend/data/pkl/raw_games_5yrs.pkl')
     basic = basic.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
@@ -155,8 +155,9 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
     X_features_cat = ['TEAM_ABBREVIATION_h', 'TEAM_ABBREVIATION_a']
     #scale the numerical features
     preproc_data = merged_df.copy()
-    scaler = MinMaxScaler()
-    preproc_data[X_features_num] = scaler.fit_transform(preproc_data[X_features_num])
+    if scaled == True:
+        scaler = MinMaxScaler()
+        preproc_data[X_features_num] = scaler.fit_transform(preproc_data[X_features_num])
 
     #one hot encode the teams
     if ohe == True:
@@ -182,11 +183,17 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True):
     #define and return X and y
     # X_preproc = preproc_data[X_features]
     # y = preproc_data['PLUS_MINUS']
-    print(X_features)
+    #print(X_features)
 
     return preproc_data
-# if __name__ == '__main__':
-#     preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl', roll_methods=['mean', 'median', 'std'], ohe=True)
-#     preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl', roll_methods=['mean', 'median', 'std'], ohe=True)
-#     preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
-#     preproc_all.to_pickle('ADV_OHE_TEAM_ALL')
+if __name__ == '__main__':
+    preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl',
+                                        roll_methods=['mean', 'median', 'std'],
+                                        ohe=True,
+                                        scaled=False)
+    preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl',
+                                        roll_methods=['mean', 'median', 'std'],
+                                        ohe=True,
+                                        scaled=False)
+    preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
+    preproc_all.to_pickle('ADV_OHE_TEAM_ALL')
