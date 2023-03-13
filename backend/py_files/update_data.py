@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import requests
 from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguegamefinder
 from nba_api.stats.endpoints import boxscoreadvancedv2
@@ -32,25 +33,23 @@ def get_game_ids():
     return game_ids
 
 def update_elo():
-    url = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
-
     today = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
-    elo_past = pd.read_csv('/data/csv/nba_elo.csv')
+    URL = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
+    elo_past = pd.read_csv(URL)
     elo_past['date'] = pd.to_datetime(elo_past['date'])
     elo_past= elo_past[elo_past['date'] > '2018-09-01']
     elo_past[elo_past['date'] < today]
     map = {'BRK': 'BKN', 'CHO': 'CHA', 'PHO': 'PHX'}
     elo_past = elo_past.replace({'team1': map, 'team2': map})
     elo_past = elo_past[['date', 'team1', 'team2', 'elo1_pre', 'elo2_pre', 'raptor1_pre', 'raptor2_pre']]
-
-    elo_past.to_pickle('______elo_past.pkl')
-
+    elo_past.to_pickle('data/pkl/elo_past.pkl')
     return
 
 def update_raw_advanced():
     #Get existing data
-    adv_team = pd.read_pickle('boxscores_advanced_team_all.pkl')
-    adv_player = pd.read_pickle('boxscores_advanced_player_all.pkl')
+
+    adv_team = pd.read_pickle('data/pkl/boxscores_advanced_team_all.pkl')
+    adv_player = pd.read_pickle('data/pkl/boxscores_advanced_player_all.pkl')
 
     game_ids = get_game_ids()
 
@@ -71,7 +70,10 @@ def update_raw_advanced():
     adv_player = pd.concat([adv_player, boxscores_advanced_player])
 
     #update the pickle file with all the data
-    adv_team.to_pickle('boxscores_advanced_team_all.pkl')
-    adv_player.to_pickle('boxscores_advanced_player_all.pkl')
+    adv_team.to_pickle('data/pkl/boxscores_advanced_team_all.pkl')
+    adv_player.to_pickle('data/pkl/boxscores_advanced_player_all.pkl')
 
     return
+
+# update_elo()
+# update_raw_advanced()
