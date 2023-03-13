@@ -10,37 +10,45 @@ import requests
 st.set_page_config(layout="wide",
                    page_title="NBA betting analysis",
                    initial_sidebar_state="expanded",
-                   menu_items={'About': "### This is a NBA betting analysis app:)"})
+                   menu_items={'About': None,
+                               'Get Help': None,
+                               'Report a bug': None})
 
-st.sidebar.write("Use the widgets to alter the graphs:")
-chck = st.sidebar.checkbox("Use your theme colours on graphs", value=True) # get colours for graphs
+with st.sidebar:
+    # "Use the widgets to alter the graphs:"
+    # chck = st.sidebar.checkbox("Use your theme colours on graphs", value=True) # get colours for graphs
+    '''
+    # PROJECT OVERVIEW
+
+    Introducing a new NBA game prediction website that uses advanced algorithms to predict the outcome of upcoming games and compares them to existing bet spreads. Our technology analyzes various factors, including team performance, player statistics, and game trends, to provide accurate predictions for each game.
+
+    Our site offers a comprehensive comparison of our predictions to existing bet spreads, providing users with the information needed to make informed betting decisions. Our interface is user-friendly and allows for easy navigation of upcoming games, predicted scores, and real-time comparison of predicted scores to bet spreads.
+
+    Whether you are an experienced sports bettor or just starting, our predictions and analysis can provide an edge in making smart betting decisions.
+
+    Join our community of NBA enthusiasts and start predicting today.
+    '''
 
 # get colors from theme config file, or set the colours to altair standards
-if chck:
-    primary_clr = st.get_option("theme.primaryColor")
-    txt_clr = st.get_option("theme.textColor")
-    # I want 3 colours to graph, so this is a red that matches the theme:
-    second_clr = "#d87c7c"
-else:
-    primary_clr = '#4c78a8'
-    second_clr = '#f58517'
-    txt_clr = '#e45756'
-
+# if chck:
+#     primary_clr = st.get_option("theme.primaryColor")
+#     txt_clr = st.get_option("theme.textColor")
+#     # I want 3 colours to graph, so this is a red that matches the theme:
+#     second_clr = "#d87c7c"
+# else:
+#     primary_clr = '#4c78a8'
+#     second_clr = '#f58517'
+#     txt_clr = '#e45756'
 
 selected = option_menu(
     menu_title=None,
-    options=['About', 'Model', ':)'],
-    icons=['body-text','calculator','calendar3'],
+    options=['Model', 'Table', ':)'],
+    icons=['body-text','calendar3','calculator'],
     orientation="horizontal"
 )
 
+games = pd.read_pickle('../backend/data/pkl/sbr_current_betting_data_2023-03-09.pkl')
 
-if selected == 'About':
-    '''
-    # NBA
-
-    This front queries the Le Wagon [taxi fare model API](https://taxifare.lewagon.ai/predict?pickup_datetime=2012-10-06%2012:10:20&pickup_longitude=40.7614327&pickup_latitude=-73.9798156&dropoff_longitude=40.6513111&dropoff_latitude=-73.8803331&passenger_count=2)
-    '''
 
 if selected == 'Model':
     df = pd.DataFrame(
@@ -54,6 +62,21 @@ if selected == 'Model':
         ('Email', 'Home phone', 'Mobile phone'))
 
     st.write('You selected:', option)
+
+if selected == 'Table':
+
+    st.dataframe(games.style.highlight_max(subset=['Opening_Spread', 'Betmgm_Spread',
+                                                   'Draft_Kings_Spread', 'Fanduel_Spread',
+                                                   'Caesars_Spread', 'Pointsbet_Spread',
+                                                   'Wynn_Spread', 'Betrivers_Spread',],
+                                           axis=1, color='grey'))
+
+    st.dataframe(games.style.highlight_min(subset=['Opening_Odds', 'Betmgm_Odds',
+                                                   'Draft_Kings_Odds', 'Fanduel_Odds',
+                                                   'Caesars_Odds', 'Pointsbet_Odds',
+                                                   'Wynn_Odds', 'Betrivers_Odds'],
+                                           axis=1, color='grey'))
+
 
 if selected == ':)':
     '''
