@@ -14,7 +14,7 @@ dates = games[games['GAME_DATE'] > last_date].sort_values('GAME_DATE', ascending
 
 first = True
 for date in dates:
-    time.sleep(4)
+    # time.sleep(4)
     URL = f"https://www.sportsbookreview.com/betting-odds/nba-basketball/?date={date}"
     headers = {"User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0"}
 
