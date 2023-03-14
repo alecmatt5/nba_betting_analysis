@@ -42,7 +42,8 @@ with st.sidebar:
 
 selected = option_menu(
     menu_title=None,
-    options=['Model', 'Table', ':)'],
+    options=['Yesterday', 'Today', 'Tommorow'],
+    default_index=1,
     icons=['body-text','calendar3','calculator'],
     orientation="horizontal"
 )
@@ -50,7 +51,7 @@ selected = option_menu(
 games = pd.read_pickle('../backend/data/pkl/sbr_current_betting_data_2023-03-09.pkl')
 
 
-if selected == 'Model':
+if selected == 'Yesterday':
     df = pd.DataFrame(
     np.random.randn(10, 5),
     columns=('col %d' % i for i in range(5)))
@@ -63,22 +64,20 @@ if selected == 'Model':
 
     st.write('You selected:', option)
 
-if selected == 'Table':
+if selected == 'Today':
 
     st.dataframe(games.style.highlight_max(subset=['Opening_Spread', 'Betmgm_Spread',
                                                    'Draft_Kings_Spread', 'Fanduel_Spread',
                                                    'Caesars_Spread', 'Pointsbet_Spread',
                                                    'Wynn_Spread', 'Betrivers_Spread',],
-                                           axis=1, color='grey'))
-
-    st.dataframe(games.style.highlight_min(subset=['Opening_Odds', 'Betmgm_Odds',
+                                           axis=1, color='grey').highlight_min(subset=['Opening_Odds', 'Betmgm_Odds',
                                                    'Draft_Kings_Odds', 'Fanduel_Odds',
                                                    'Caesars_Odds', 'Pointsbet_Odds',
                                                    'Wynn_Odds', 'Betrivers_Odds'],
-                                           axis=1, color='grey'))
+                                           axis=1, color='brown'))
 
 
-if selected == ':)':
+if selected == 'Tommorow':
     '''
     # TaxiFareModel front
 
