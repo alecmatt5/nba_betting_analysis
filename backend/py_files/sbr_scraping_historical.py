@@ -2,10 +2,15 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import time
+from py_files.preprocess import get_basic_boxscores
 
-games = pd.read_pickle('backend/data/pkl/raw_games_5yrs.pkl')
+games = get_basic_boxscores(date='2023-03-01')
 games['GAME_DATE'] = games['GAME_DATE'].dt.strftime('%Y-%m-%d')
-dates = games[games['GAME_DATE'] > '2019-10-01'].sort_values('GAME_DATE', ascending=False)['GAME_DATE'].unique().tolist()
+games = games.sort_values('GAME_DATE', ascending=False)
+betting_data = pd.read_pickle('data/pkl/sbr_betting_data.pkl')
+last_date = betting_data ['Game_Date'].iloc[0]
+dates = games[games['GAME_DATE'] > last_date].sort_values('GAME_DATE', ascending=False)['GAME_DATE'].unique().tolist()
+
 
 first = True
 for date in dates:
@@ -86,5 +91,5 @@ for date in dates:
         else:
             betting_df = pd.concat([betting_df, new_df])
     print(f'{date} scraped')
-betting_df.reset_index(drop=True, inplace=True)
+betting_df = pd.concat([betting_df, betting_data])
 betting_df.to_pickle('sbr_betting_data.pkl')
