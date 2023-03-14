@@ -80,7 +80,11 @@ def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=
 
 def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, scaled=True):
     #get basic boxscore data to add columns to the advanced boxscore
-    basic = get_basic_boxscores()
+
+    date = datetime.now() - timedelta(days=60)
+    date_str = date.strftime('%Y-%m-%d')
+
+    basic = get_basic_boxscores(date=date_str)
     games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PLUS_MINUS']].copy()
 
     #get advanced boxscore data from pickle
@@ -106,6 +110,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     unique_values = value_counts[value_counts == 1].index.tolist()
     advanced = advanced[~advanced['GAME_ID'].isin(unique_values)]
     advanced = advanced.reset_index(drop=True)
+
     advanced_desc = advanced.sort_values(by=['GAME_DATE'], ascending=True).copy()
 
     #define features to engineer
