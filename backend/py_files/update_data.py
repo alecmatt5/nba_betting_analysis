@@ -6,29 +6,41 @@ from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguegamefinder
 from nba_api.stats.endpoints import boxscoreadvancedv2
 from datetime import datetime, timedelta
+from nba_api.stats.endpoints import scoreboard
 
 def get_game_ids():
     #Game ids for the missing games
-    #UPDATE THIS!!!!!!!!!!!!!
-    nba_teams = teams.get_teams()
-    team_names = [team['full_name'] for team in nba_teams]
-    team_names.sort()
-    team_ids = [team['id'] for team in nba_teams]
+    # Get yesterday's date
+    from datetime import datetime, timedelta
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_str = yesterday.strftime('%m/%d/%Y')
 
-    games = None
-    for ids in team_ids:
-        if games is None:
-            gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
-            games = gamefinder.get_data_frames()[0]
-        else:
-            gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
-            games = pd.concat([games, gamefinder.get_data_frames()[0]])
-    games['GAME_DATE'] = pd.to_datetime(games['GAME_DATE'])
+    scoreboard_ = scoreboard.Scoreboard(game_date=yesterday_str, league_id='00', day_offset=0)
+    games = scoreboard_.game_header.get_data_frame()
+    if not games.empty:
+        game_ids = list(games['GAME_ID'])
+    else:
+        game_ids = None
 
-    yesterday = (datetime.utcnow() - timedelta(hours=33)).strftime('%Y-%m-%d')
+    # nba_teams = teams.get_teams()
+    # team_names = [team['full_name'] for team in nba_teams]
+    # team_names.sort()
+    # team_ids = [team['id'] for team in nba_teams]
 
-    games= games[games['GAME_DATE'] == yesterday]
-    game_ids = games['GAME_ID'].unique().tolist()
+    # games = None
+    # for ids in team_ids:
+    #     if games is None:
+    #         gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
+    #         games = gamefinder.get_data_frames()[0]
+    #     else:
+    #         gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=ids)
+    #         games = pd.concat([games, gamefinder.get_data_frames()[0]])
+    # games['GAME_DATE'] = pd.to_datetime(games['GAME_DATE'])
+
+    # yesterday = (datetime.utcnow() - timedelta(hours=33)).strftime('%Y-%m-%d')
+
+    # games= games[games['GAME_DATE'] == yesterday]
+    # game_ids = games['GAME_ID'].unique().tolist()
 
     return game_ids
 
