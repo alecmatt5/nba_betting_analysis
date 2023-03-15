@@ -43,8 +43,32 @@ def get_preproc_ngboost(path, split_date='2022-04-27 00:00:00'):
 
     return (X_train, X_test, y_train, y_test)
 
-def get_new_preproc_ngboost(path):
+def get_new_preproc_path(path):
     df = pd.read_pickle(path)
+    df.set_index('GAME_ID', inplace=True)
+
+    columns_keep = ['OFF_RATING_Roll_mean_h', 'DEF_RATING_Roll_mean_h',
+       'NET_RATING_Roll_mean_h', 'OREB_PCT_Roll_mean_h', 'EFG_PCT_Roll_mean_h',
+       'TS_PCT_Roll_mean_h', 'NET_RATING_Roll_median_h',
+       'NET_RATING_Roll_std_h', 'AST_PCT_Roll_std_h', 'AST_TOV_Roll_std_h',
+       'PACE_Roll_std_h', 'DEF_RATING_Roll_mean_a', 'NET_RATING_Roll_mean_a',
+       'AST_TOV_Roll_mean_a', 'TM_TOV_PCT_Roll_mean_a',
+       'NET_RATING_Roll_median_a', 'AST_TOV_Roll_median_a',
+       'DREB_PCT_Roll_median_a', 'TS_PCT_Roll_median_a',
+       'DEF_RATING_Roll_std_a', 'AST_TOV_Roll_std_a', 'ATL_h', 'BKN_h',
+       'BOS_h', 'CHA_h', 'CHI_h', 'CLE_h', 'DAL_h', 'DEN_h', 'DET_h', 'GSW_h',
+       'HOU_h', 'IND_h', 'LAC_h', 'LAL_h', 'MEM_h', 'MIA_h', 'MIL_h', 'MIN_h',
+       'NOP_h', 'NYK_h', 'OKC_h', 'ORL_h', 'PHI_h', 'PHX_h', 'POR_h', 'SAC_h',
+       'SAS_h', 'TOR_h', 'UTA_h', 'WAS_h', 'ATL_a', 'BKN_a', 'BOS_a', 'CHA_a',
+       'CHI_a', 'CLE_a', 'DAL_a', 'DEN_a', 'DET_a', 'GSW_a', 'HOU_a', 'IND_a',
+       'LAC_a', 'LAL_a', 'MEM_a', 'MIA_a', 'MIL_a', 'MIN_a', 'NOP_a', 'NYK_a',
+       'OKC_a', 'ORL_a', 'PHI_a', 'PHX_a', 'POR_a', 'SAC_a', 'SAS_a', 'TOR_a',
+       'UTA_a', 'WAS_a']
+    X = df[columns_keep]
+
+    return X
+
+def get_new_preproc_df(df):
     df.set_index('GAME_ID', inplace=True)
 
     columns_keep = ['OFF_RATING_Roll_mean_h', 'DEF_RATING_Roll_mean_h',
@@ -157,10 +181,12 @@ def get_betting_prediction(model, X_test, betting_plus_minus):
 #---------------------------------------------------------------------------------------------------------------------------------------
 def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54):
     '''get the y_pred in a neat package'''
+    df = pd.read_pickle(file_path_df)
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']]
     left_cumsums = []
     right_cumsums = []
     if new_df == True:
-        X_test = get_new_preproc_ngboost(file_path_df)
+        X_test = get_new_preproc_path(file_path_df)
         x_min =-110
         x_max =110
     elif new_df == False:
@@ -172,15 +198,32 @@ def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentil
     for i in range(X_test.shape[0]):
         left_cumsums.append(get_left_betting_metric(x_min, x_max, mean[i], std[i], percentile))
         right_cumsums.append(get_right_betting_metric(x_min, x_max, mean[i], std[i], percentile))
-    return pd.DataFrame({f'left_{percentile}':left_cumsums, f'right_{percentile}': right_cumsums}, index=X_test.index)
+    temp = pd.DataFrame({f'left_{percentile}':left_cumsums, f'right_{percentile}': right_cumsums},index=X_test.index)
+    return pd.merge(df_info, temp, on='GAME_ID')
+
+def get_y_pred_percentile_from_df(df, file_path_model, percentile=0.54):
+    '''get the y_pred in a neat package'''
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']]
+    left_cumsums = []
+    right_cumsums = []
+    X_test = get_new_preproc_df(df)
+    x_min =-110
+    x_max =110
+    model = load_ngboost_team_model(file_path_model)
+    mean, std = get_mean_std_normal_distribution(model, X_test)
+    for i in range(X_test.shape[0]):
+        left_cumsums.append(get_left_betting_metric(x_min, x_max, mean[i], std[i], percentile))
+        right_cumsums.append(get_right_betting_metric(x_min, x_max, mean[i], std[i], percentile))
+    temp = pd.DataFrame({f'left_{percentile}':left_cumsums, f'right_{percentile}': right_cumsums}, index=X_test.index).reset_index()
+    return pd.merge(df_info, temp, on='GAME_ID')
 
 
 if __name__ == "__main__":
     #GET THE MAIN BETTING ODDS
-    file_path_df = '../data/pkl/ADV_OHE_TEAM_ALL'
+    file_path_df = 'backend/data/pkl/ADV_OHE_TEAM_ALL'
     file_path_model = Path.home()/'code'/'alecmatt5'/'nba_betting_analysis'/'backend'/'data'/'pkl'/'ngdemo.pkl'
-    get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
-
+    y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
+    y_pred.to_pickle('y_pred.pkl')
 
 #     #=------------------------------------------TEST THE FUNCTIONS--------------------------------------------------
 #     path = '../data/pkl/ADV_OHE_TEAM_ALL'
