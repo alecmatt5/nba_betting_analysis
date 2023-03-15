@@ -7,14 +7,14 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 from datetime import datetime, timedelta
 
-def get_data(filename):
-    path = os.getcwd()
-    if '.csv' in filename:
-        return pd.read_csv(path + filename)
-    elif '.pkl' in filename:
-        return pd.read_pickle(path + filename)
-    else:
-        return None
+# def get_data(filename):
+#     path = os.getcwd()
+#     if '.csv' in filename:
+#         return pd.read_csv(path + filename)
+#     elif '.pkl' in filename:
+#         return pd.read_pickle(path + filename)
+#     else:
+#         return None
 
 def get_basic_boxscores(date="2018-09-01"):
     nba_teams = teams.get_teams()
@@ -44,7 +44,7 @@ def get_basic_boxscores(date="2018-09-01"):
     games['HOME_TEAM'] = 0
     games.loc[games['MATCHUP'].str.contains('vs.'), ['HOME_TEAM']] = 1
     games.loc[games['HOME_TEAM'] == 1, :]
-
+    games.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
     return games
 
 def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=[]):
@@ -80,12 +80,12 @@ def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=
 
 def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, scaled=True):
     #get basic boxscore data to add columns to the advanced boxscore
-    basic = get_data('/backend/data/pkl/raw_games_5yrs.pkl')
-    basic = basic.sort_values(by=['GAME_DATE', 'GAME_ID'], ascending=False).reset_index(drop=True)
+    basic = get_basic_boxscores()
     games_df = basic[['TEAM_ID', 'TEAM_ABBREVIATION', 'GAME_ID', 'GAME_DATE', 'HOME_TEAM', 'PLUS_MINUS']].copy()
 
     #get advanced boxscore data from pickle
-    advanced = get_data(f'/backend/data/pkl/{adv_pickle_filename}')
+    advanced = pd.read_pickle(f'data/pkl/{adv_pickle_filename}')
+    # advanced = pd.read_pickle('data/pkl/boxscores_advanced_team_all.pkl')
 
     #drop unecessary columns
     columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
@@ -99,10 +99,13 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     #merge the needed columns from basic to advanced
     advanced = advanced.merge(games_df.drop(columns=['TEAM_ID']), on=['GAME_ID', 'TEAM_ABBREVIATION'])
 
+    advanced = advanced.drop_duplicates()
+
     #drop rows that only have 1 team for the game id
     value_counts = advanced['GAME_ID'].value_counts()
     unique_values = value_counts[value_counts == 1].index.tolist()
-    advanced = advanced[~advanced['GAME_ID'].isin(unique_values)].reset_index(drop=True)
+    advanced = advanced[~advanced['GAME_ID'].isin(unique_values)]
+    advanced = advanced.reset_index(drop=True)
     advanced_desc = advanced.sort_values(by=['GAME_DATE'], ascending=True).copy()
 
     #define features to engineer
@@ -112,14 +115,19 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
 
     #caluculate rolling metrics
     if 'mean' in roll_methods:
-        df_temp = roll(df = advanced_desc, roll_number=5, procedure='mean', selected_columns=eng_features)
+        df_temp = roll(df = advanced_desc, roll_number=4, procedure='mean', selected_columns=eng_features)
         advanced = advanced.merge(df_temp, left_index=True, right_index=True)
     if 'median' in roll_methods:
-        df_temp = roll(df = advanced_desc, roll_number=5, procedure='median', selected_columns=eng_features)
+        df_temp = roll(df = advanced_desc, roll_number=4, procedure='median', selected_columns=eng_features)
         advanced = advanced.merge(df_temp, left_index=True, right_index=True)
     if 'std' in roll_methods:
-        df_temp = roll(df = advanced_desc, roll_number=5, procedure='std', selected_columns=eng_features)
+        df_temp = roll(df = advanced_desc, roll_number=4, procedure='std', selected_columns=eng_features)
         advanced = advanced.merge(df_temp, left_index=True, right_index=True)
+
+    #drop original columns to prevent data leakage
+    drop_columns = ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'AST_PCT', 'AST_TOV', 'OREB_PCT', 'DREB_PCT',
+        'REB_PCT', 'TM_TOV_PCT', 'EFG_PCT', 'TS_PCT', 'PACE', 'POSS']
+    advanced.drop(columns=drop_columns, inplace=True)
 
     #split data frame between the home teams and the away teams
     advanced = advanced.sort_values(by=['GAME_DATE', 'GAME_ID', 'HOME_TEAM'], ascending=False).reset_index(drop=True)
@@ -142,6 +150,15 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     columns_to_merge.append('GAME_ID')
     merged_df = adv_home.merge(adv_away[columns_to_merge], on=['GAME_ID'])
     merged_df = merged_df.dropna()
+
+    #get elo and raptor scores
+    elo_past = pd.read_pickle('data/pkl/elo_past.pkl')
+
+
+    merged_df = merged_df.merge(elo_past, left_on=['GAME_DATE', 'TEAM_ABBREVIATION_h'], right_on=['date', 'team1'])
+    merged_df.drop(columns=['date', 'team1', 'team2'], inplace=True)
+    merged_df.rename(columns={'elo1_pre': 'elo_h', 'elo2_pre': 'elo_a', 'raptor1_pre': 'raptor_h', 'raptor2_pre': 'raptor_a'},
+          inplace=True)
 
     #make lists of feature column names
     X_features_num = [col for col in merged_df.columns if 'GAME_ID' not in col
@@ -185,15 +202,16 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     # y = preproc_data['PLUS_MINUS']
     #print(X_features)
 
-    return preproc_data
+    return preproc_data , X_features
+
 if __name__ == '__main__':
-    preproc_part1 = preprocess_advanced('boxscores_advanced_team_part1.pkl',
-                                        roll_methods=['mean', 'median', 'std'],
+    preproc_part1, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
+                                        roll_methods=['mean'],
                                         ohe=True,
                                         scaled=False)
-    preproc_part2 = preprocess_advanced('boxscores_advanced_team_part2.pkl',
-                                        roll_methods=['mean', 'median', 'std'],
-                                        ohe=True,
-                                        scaled=False)
-    preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
-    preproc_all.to_pickle('ADV_OHE_TEAM_ALL')
+#     preproc_part2, X_features = preprocess_advanced('boxscores_advanced_team_part2.pkl',
+#                                         roll_methods=['mean'],
+#                                         ohe=True,
+#                                         scaled=False)
+#     preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
+#     preproc_all.to_pickle('/data/pkl/alec_test_data.pkl')
