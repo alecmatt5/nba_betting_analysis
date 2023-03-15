@@ -13,7 +13,8 @@ def get_game_ids():
     #Game ids for the missing games
     # Get yesterday's date
     from datetime import datetime, timedelta
-    yesterday = datetime.now() - timedelta(days=1)
+    today = (datetime.utcnow() - timedelta(hours=4))
+    yesterday = today - timedelta(days=1)
     yesterday_str = yesterday.strftime('%m/%d/%Y')
 
     scoreboard_ = scoreboard.Scoreboard(game_date=yesterday_str, league_id='00', day_offset=0)
@@ -46,7 +47,7 @@ def get_game_ids():
     return game_ids
 
 def update_elo():
-    today = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
+    today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
     URL = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
     elo_past = pd.read_csv(URL)
     elo_past['date'] = pd.to_datetime(elo_past['date'])
