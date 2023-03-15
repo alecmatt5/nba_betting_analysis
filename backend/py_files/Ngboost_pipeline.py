@@ -1,6 +1,4 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import RandomizedSearchCV
 import numpy as np
 import pickle
 from pathlib import Path
@@ -21,7 +19,7 @@ def get_preproc_ngboost(path, split_date='2022-04-27 00:00:00'):
     X_test = df.loc[df.GAME_DATE > train_test_split_date, ~df.columns.isin(['PLUS_MINUS'])]
     y_train = df.loc[df.GAME_DATE < train_test_split_date, ['PLUS_MINUS']]['PLUS_MINUS']
     y_test = df.loc[df.GAME_DATE > train_test_split_date, ['PLUS_MINUS']]['PLUS_MINUS']
-    
+
     columns_keep = ['OFF_RATING_Roll_mean_h', 'DEF_RATING_Roll_mean_h',
        'NET_RATING_Roll_mean_h', 'OREB_PCT_Roll_mean_h', 'EFG_PCT_Roll_mean_h',
        'TS_PCT_Roll_mean_h', 'NET_RATING_Roll_median_h',
@@ -48,7 +46,7 @@ def get_preproc_ngboost(path, split_date='2022-04-27 00:00:00'):
 def get_new_preproc_ngboost(path):
     df = pd.read_pickle(path)
     df.set_index('GAME_ID', inplace=True)
-    
+
     columns_keep = ['OFF_RATING_Roll_mean_h', 'DEF_RATING_Roll_mean_h',
        'NET_RATING_Roll_mean_h', 'OREB_PCT_Roll_mean_h', 'EFG_PCT_Roll_mean_h',
        'TS_PCT_Roll_mean_h', 'NET_RATING_Roll_median_h',
@@ -166,10 +164,10 @@ def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentil
         x_min =-110
         x_max =110
     elif new_df == False:
-        X, X_test, y, y_test = get_preproc_ngboost(path, split_date='2022-04-27 00:00:00')
+        X, X_test, y, y_test = get_preproc_ngboost(file_path_df, split_date='2022-04-27 00:00:00')
         x_min =min(y_test)
         x_max =max(y_test)
-    model = load_ngboost_team_model(file_path)
+    model = load_ngboost_team_model(file_path_model)
     mean, std = get_mean_std_normal_distribution(model, X_test)
     for i in range(X_test.shape[0]):
         left_cumsums.append(get_left_betting_metric(x_min, x_max, mean[i], std[i], percentile))
