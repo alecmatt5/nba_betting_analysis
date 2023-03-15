@@ -2,7 +2,6 @@ FROM python:3.9.16-buster
 
 COPY requirements.txt requirements.txt
 RUN mkdir -p data/pkl
-COPY interface interface
 COPY api api
 COPY logic logic
 COPY data/pkl/ngdemo.pkl data/pkl/ngdemo.pkl
