@@ -66,71 +66,87 @@ if selected == 'Yesterday':
 
 if selected == 'Today':
 
-    show_Betmgm = st.checkbox('Betmgm', value=True)
-    show_Draft_Kings = st.checkbox('Draft_Kings', value=True)
-    show_Fanduel = st.checkbox('Fanduel', value=True)
-    show_Caesars = st.checkbox('Caesars', value=True)
-    show_Pointsbet = st.checkbox('Pointsbet', value=True)
-    show_Wynn = st.checkbox('Wynn', value=True)
-    show_Betrivers = st.checkbox('Betrivers', value=True)
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+
+    with col1:
+        show_Betmgm = st.checkbox('Betmgm', value=True)
+
+    with col2:
+        show_Draft_Kings = st.checkbox('Draft_Kings', value=True)
+
+    with col3:
+        show_Fanduel = st.checkbox('Fanduel', value=True)
+
+    with col4:
+        show_Caesars = st.checkbox('Caesars', value=True)
+
+    with col5:
+        show_Pointsbet = st.checkbox('Pointsbet', value=True)
+
+    with col6:
+        show_Wynn = st.checkbox('Wynn', value=True)
+
+    with col7:
+        show_Betrivers = st.checkbox('Betrivers', value=True)
 
 
-    def display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers):
-        # Hide the columns that are not selected
+
+    highlight = st.checkbox('Highlight', value=True)
+
+    def display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers, highlight):
+    # Hide the columns that are not selected
         df = games
+
+        spread_subset=['Opening_Spread', 'Betmgm_Spread',
+                'Draft_Kings_Spread', 'Fanduel_Spread',
+                'Caesars_Spread', 'Pointsbet_Spread',
+                'Wynn_Spread', 'Betrivers_Spread',]
+        odds_subset=['Opening_Odds', 'Betmgm_Odds',
+                'Draft_Kings_Odds', 'Fanduel_Odds',
+                'Caesars_Odds', 'Pointsbet_Odds',
+                'Wynn_Odds', 'Betrivers_Odds']
 
         if not show_Betmgm:
             df.drop(['Betmgm_Spread', 'Betmgm_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Betmgm_Spread')
+            odds_subset.remove('Betmgm_Odds')
         if not show_Draft_Kings:
             df.drop(['Draft_Kings_Spread', 'Draft_Kings_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Draft_Kings_Spread')
+            odds_subset.remove('Draft_Kings_Odds')
         if not show_Fanduel:
             df.drop(['Fanduel_Spread', 'Fanduel_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Fanduel_Spread')
+            odds_subset.remove('Fanduel_Odds')
         if not show_Caesars:
             df.drop(['Caesars_Spread', 'Caesars_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Caesars_Spread')
+            odds_subset.remove('Caesars_Odds')
         if not show_Pointsbet:
             df.drop(['Pointsbet_Spread', 'Pointsbet_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Pointsbet_Spread')
+            odds_subset.remove('Pointsbet_Odds')
         if not show_Wynn:
             df.drop(['Wynn_Spread', 'Wynn_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Wynn_Spread')
+            odds_subset.remove('Wynn_Odds')
         if not show_Betrivers:
             df.drop(['Betrivers_Spread', 'Betrivers_Odds'], axis=1, inplace=True)
+            spread_subset.remove('Betrivers_Spread')
+            odds_subset.remove('Betrivers_Odds')
 
         # Display the data frame with the selected columns using streamlit
-        st.write(df)
 
-    # def display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers):
-    #     # Hide the columns that are not selected
-    #     df = df = pd.DataFrame()
-
-    #     if not show_Betmgm:
-    #         df.join(games[['Betmgm_Spread', 'Betmgm_Odds']])
-    #     if not show_Draft_Kings:
-    #         df.join(games[['Draft_Kings_Spread', 'Draft_Kings_Odds']])
-    #     if not show_Fanduel:
-    #         df.join(games[['Fanduel_Spread', 'Fanduel_Odds']])
-    #     if not show_Caesars:
-    #         df.join(games[['Caesars_Spread', 'Caesars_Odds']])
-    #     if not show_Pointsbet:
-    #         df.join(games[['Pointsbet_Spread', 'Pointsbet_Odds']])
-    #     if not show_Wynn:
-    #         df.join(games[['Wynn_Spread', 'Wynn_Odds']])
-    #     if not show_Betrivers:
-    #         df.join(games[['Betrivers_Spread', 'Betrivers_Odds']])
-
-    #     # Display the data frame with the selected columns using streamlit
-    #     st.write(df)
+        if highlight:
+            st.write(df.style.highlight_max(subset=spread_subset,
+                                            axis=1, color='grey')
+                    .highlight_min(subset=odds_subset,
+                                            axis=1, color='brown'))
+        else:
+            st.write(df)
 
     # Call the display_dataframe function with the current states of the checkboxes as arguments
-    display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers)
-
-    st.dataframe(games.style.highlight_max(subset=['Opening_Spread', 'Betmgm_Spread',
-                                                   'Draft_Kings_Spread', 'Fanduel_Spread',
-                                                   'Caesars_Spread', 'Pointsbet_Spread',
-                                                   'Wynn_Spread', 'Betrivers_Spread',],
-                                           axis=1, color='grey').highlight_min(subset=['Opening_Odds', 'Betmgm_Odds',
-                                                   'Draft_Kings_Odds', 'Fanduel_Odds',
-                                                   'Caesars_Odds', 'Pointsbet_Odds',
-                                                   'Wynn_Odds', 'Betrivers_Odds'],
-                                           axis=1, color='brown'))
+    display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers, highlight)
 
     button_1 = st.button('Today')
     button_2 = st.button('Tommorow')

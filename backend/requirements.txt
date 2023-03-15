@@ -161,3 +161,4 @@ ypy-websocket==0.8.2
 ngboost==0.3.13
 xgboost==1.7.4
 fastapi==0.94.0
+uvicorn==0.21.0
