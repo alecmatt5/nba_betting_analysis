@@ -48,7 +48,7 @@ selected = option_menu(
     orientation="horizontal"
 )
 
-games = pd.read_pickle('../backend/data/pkl/sbr_current_betting_data_2023-03-09.pkl')
+games = pd.read_pickle('../backend/data/pkl/sbr_todays_betting_data.pkl')
 
 
 if selected == 'Yesterday':

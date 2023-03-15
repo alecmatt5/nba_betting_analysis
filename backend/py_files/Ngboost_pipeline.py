@@ -177,10 +177,10 @@ def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentil
 
 if __name__ == "__main__":
     #GET THE MAIN BETTING ODDS
-    file_path_df = '../data/pkl/ADV_OHE_TEAM_ALL'
+    file_path_df = 'backend/data/pkl/ADV_OHE_TEAM_ALL'
     file_path_model = Path.home()/'code'/'alecmatt5'/'nba_betting_analysis'/'backend'/'data'/'pkl'/'ngdemo.pkl'
-    get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
-
+    y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
+    y_pred.to_pickle('y_pred.pkl')
 
 #     #=------------------------------------------TEST THE FUNCTIONS--------------------------------------------------
 #     path = '../data/pkl/ADV_OHE_TEAM_ALL'
