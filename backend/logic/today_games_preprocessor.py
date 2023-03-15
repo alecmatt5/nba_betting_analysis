@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from nba_api.stats.static import teams
+from nba_api.stats.endpoints import scoreboard
 from nba_api.stats.endpoints import leaguegamefinder
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
@@ -80,7 +81,6 @@ def roll(df, roll_number = 10, procedure = '', suff = '_Roll', selected_columns=
 
 def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, scaled=True):
     #get basic boxscore data to add columns to the advanced boxscore
-
     date = datetime.now() - timedelta(days=60)
     date_str = date.strftime('%Y-%m-%d')
 
@@ -91,6 +91,77 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     advanced = pd.read_pickle(f'data/pkl/{adv_pickle_filename}')
     # advanced = pd.read_pickle('data/pkl/boxscores_advanced_team_all.pkl')
 
+    ############################################################################
+    # Get today's date
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    # Get scoreboard for today's games
+    scoreboard_today = scoreboard.Scoreboard(game_date=today)
+    games = scoreboard_today.game_header.get_data_frame()
+
+    # Get all NBA teams
+    nba_teams = teams.get_teams()
+
+    # Create an empty list to store the team data
+    team_data = []
+
+    # Loop through each game and add team data to the list
+    for index, game in games.iterrows():
+        home_team_id = game["HOME_TEAM_ID"]
+        away_team_id = game["VISITOR_TEAM_ID"]
+
+        home_team = next((team for team in nba_teams if team["id"] == home_team_id), None)
+        away_team = next((team for team in nba_teams if team["id"] == away_team_id), None)
+
+        if home_team is not None and away_team is not None:
+            team_data.append({
+                "game_id": game["GAME_ID"],
+                "home_team_id": home_team["id"],
+                "home_team": home_team["abbreviation"],
+                "away_team_id": away_team["id"],
+                "away_team": away_team["abbreviation"]
+            })
+
+    # Convert the list of team data to a DataFrame
+    team_df = pd.DataFrame(team_data)
+
+    df1 = team_df[['home_team_id', 'home_team', 'game_id']]
+    df1.rename(columns={'game_id': 'GAME_ID', 'home_team': 'TEAM_ABBREVIATION', 'home_team_id': 'TEAM_ID'}, inplace=True)
+    df1['GAME_DATE'] = today
+    df1['HOME_TEAM'] = 1
+    df1['PLUS_MINUS'] = 0
+    df2 = team_df[['away_team_id', 'away_team', 'game_id']]
+    df2.rename(columns={'game_id': 'GAME_ID', 'away_team': 'TEAM_ABBREVIATION', 'away_team_id': 'TEAM_ID'}, inplace=True)
+    df2['GAME_DATE'] = today
+    df2['HOME_TEAM'] = 0
+    df2['PLUS_MINUS'] = 0
+    games_today_df = pd.concat([df1, df2], ignore_index=True, sort=False)
+    games_today_df.GAME_DATE = pd.to_datetime(games_today_df.GAME_DATE)
+
+    games_df = pd.concat([games_today_df, games_df], ignore_index=True, sort=False)
+
+    advanced_today_df = games_today_df
+
+    columns = ['TEAM_NAME', 'TEAM_CITY',
+    'MIN', 'E_OFF_RATING', 'OFF_RATING', 'E_DEF_RATING', 'DEF_RATING',
+    'E_NET_RATING', 'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO',
+    'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'E_TM_TOV_PCT', 'TM_TOV_PCT',
+    'EFG_PCT', 'TS_PCT', 'USG_PCT', 'E_USG_PCT', 'E_PACE', 'PACE',
+    'PACE_PER40', 'POSS', 'PIE']
+
+    for column in columns:
+        advanced_today_df[column] = 0
+
+    advanced_today_df = advanced_today_df.reindex(columns=['GAME_ID', 'TEAM_ID', 'TEAM_NAME', 'TEAM_ABBREVIATION', 'TEAM_CITY',
+                                                        'MIN', 'E_OFF_RATING', 'OFF_RATING', 'E_DEF_RATING', 'DEF_RATING',
+                                                        'E_NET_RATING', 'NET_RATING', 'AST_PCT', 'AST_TOV', 'AST_RATIO',
+                                                        'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'E_TM_TOV_PCT', 'TM_TOV_PCT',
+                                                        'EFG_PCT', 'TS_PCT', 'USG_PCT', 'E_USG_PCT', 'E_PACE', 'PACE',
+                                                        'PACE_PER40', 'POSS', 'PIE'])
+
+    advanced = pd.concat([advanced_today_df, advanced], ignore_index=True, sort=False)
+    ############################################################################
+
     #drop unecessary columns
     columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
                    'E_NET_RATING', 'AST_RATIO', 'E_TM_TOV_PCT', 'USG_PCT',
@@ -98,6 +169,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     advanced = advanced.drop(columns=columns_to_drop)
 
     #change game_id type to match between the 2 data frames
+    games_df['GAME_ID'] = games_df['GAME_ID'].astype('int32')
     advanced['GAME_ID'] = advanced['GAME_ID'].astype('int32')
 
     #merge the needed columns from basic to advanced
@@ -207,6 +279,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     # y = preproc_data['PLUS_MINUS']
     #print(X_features)
 
+    preproc_data = preproc_data[preproc_data['GAME_DATE'] == datetime.now().strftime('%Y-%m-%d')]
     return preproc_data , X_features
 
 if __name__ == '__main__':
