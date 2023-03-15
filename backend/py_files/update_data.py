@@ -9,21 +9,29 @@ from datetime import datetime, timedelta
 from nba_api.stats.endpoints import scoreboard
 from preprocess import get_basic_boxscores
 
-def get_game_ids():
+def get_game_ids(dates=None):
     #Game ids for the missing games
     # Get yesterday's date
-    from datetime import datetime, timedelta
-    today = (datetime.utcnow() - timedelta(hours=4))
-    yesterday = today - timedelta(days=1)
-    yesterday_str = yesterday.strftime('%m/%d/%Y')
-
-    scoreboard_ = scoreboard.Scoreboard(game_date=yesterday_str, league_id='00', day_offset=0)
-    games = scoreboard_.game_header.get_data_frame()
+    if dates == None:
+        from datetime import datetime, timedelta
+        today = (datetime.utcnow() - timedelta(hours=4))
+        yesterday = today - timedelta(days=1)
+        date = yesterday.strftime('%m/%d/%Y')
+        scoreboard_ = scoreboard.Scoreboard(game_date=date, league_id='00', day_offset=0)
+        games = scoreboard_.game_header.get_data_frame()
+    else:
+        games = None
+        for date in dates:
+            if games is None:
+                scoreboard_ = scoreboard.Scoreboard(game_date=dates, league_id='00', day_offset=0)
+                games = scoreboard_.game_header.get_data_frame()
+            else:
+                scoreboard_ = scoreboard.Scoreboard(game_date=dates, league_id='00', day_offset=0)
+                games = pd.concat([games, scoreboard_.game_header.get_data_frame()])
     if not games.empty:
         game_ids = list(games['GAME_ID'])
     else:
         game_ids = None
-
     # nba_teams = teams.get_teams()
     # team_names = [team['full_name'] for team in nba_teams]
     # team_names.sort()
