@@ -279,6 +279,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     # y = preproc_data['PLUS_MINUS']
     #print(X_features)
 
+    preproc_data = preproc_data[preproc_data['GAME_DATE'] == datetime.now().strftime('%Y-%m-%d')]
     return preproc_data , X_features
 
 if __name__ == '__main__':
