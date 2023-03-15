@@ -34,7 +34,7 @@ def get_basic_boxscores(date="2018-09-01"):
     games.GAME_ID = pd.to_numeric(games.GAME_ID, downcast='integer')
     games.GAME_DATE = pd.to_datetime(games.GAME_DATE, infer_datetime_format=True)
 
-    today = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
+    today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
     games = games[games['GAME_DATE'] < today]
     games = games[games['GAME_DATE'] > date].sort_values(by='GAME_DATE', ascending=False)
 
