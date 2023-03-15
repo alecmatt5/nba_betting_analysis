@@ -91,5 +91,5 @@ def update_raw_advanced():
 # def get_player_plus_minus():
 #     basic = get_basic_boxscores()
 
-update_elo()
-update_raw_advanced()
+# update_elo()
+# update_raw_advanced()
