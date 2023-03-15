@@ -7,6 +7,7 @@ from nba_api.stats.endpoints import leaguegamefinder
 from nba_api.stats.endpoints import boxscoreadvancedv2
 from datetime import datetime, timedelta
 from nba_api.stats.endpoints import scoreboard
+from preprocess import get_basic_boxscores
 
 def get_game_ids():
     #Game ids for the missing games
@@ -87,5 +88,8 @@ def update_raw_advanced():
 
     return
 
-# update_elo()
-# update_raw_advanced()
+# def get_player_plus_minus():
+#     basic = get_basic_boxscores()
+
+update_elo()
+update_raw_advanced()
