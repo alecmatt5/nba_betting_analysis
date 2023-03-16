@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from nba_api.stats.endpoints import scoreboard
 from preprocess import get_basic_boxscores
 
-def get_game_ids(dates=None):
+def get_game_ids(dates: list):
     #Game ids for the missing games
     # Get yesterday's date
-    if dates == None:
+    if len(dates) == 0:
         from datetime import datetime, timedelta
         today = (datetime.utcnow() - timedelta(hours=4))
         yesterday = today - timedelta(days=1)
@@ -54,19 +54,6 @@ def get_game_ids(dates=None):
 
     return game_ids
 
-def update_elo():
-    today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
-    URL = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
-    elo_past = pd.read_csv(URL)
-    elo_past['date'] = pd.to_datetime(elo_past['date'])
-    elo_past= elo_past[elo_past['date'] > '2018-09-01']
-    elo_past[elo_past['date'] < today]
-    map = {'BRK': 'BKN', 'CHO': 'CHA', 'PHO': 'PHX'}
-    elo_past = elo_past.replace({'team1': map, 'team2': map})
-    elo_past = elo_past[['date', 'team1', 'team2', 'elo1_pre', 'elo2_pre', 'raptor1_pre', 'raptor2_pre']]
-    elo_past.to_pickle('data/pkl/elo_past.pkl')
-    return
-
 def update_raw_advanced():
     #Get existing data
 
@@ -97,8 +84,22 @@ def update_raw_advanced():
 
     return
 
+def update_elo():
+    today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
+    URL = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
+    elo_past = pd.read_csv(URL)
+    elo_past['date'] = pd.to_datetime(elo_past['date'])
+    elo_past= elo_past[elo_past['date'] > '2018-09-01']
+    elo_past[elo_past['date'] < today]
+    map = {'BRK': 'BKN', 'CHO': 'CHA', 'PHO': 'PHX'}
+    elo_past = elo_past.replace({'team1': map, 'team2': map})
+    elo_past = elo_past[['date', 'team1', 'team2', 'elo1_pre', 'elo2_pre', 'raptor1_pre', 'raptor2_pre']]
+    elo_past.to_pickle('data/pkl/elo_past.pkl')
+    return
+
+
 # def get_player_plus_minus():
 #     basic = get_basic_boxscores()
 
-# update_elo()
-# update_raw_advanced()
+update_elo()
+update_raw_advanced()
