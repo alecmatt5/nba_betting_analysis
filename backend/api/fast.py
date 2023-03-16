@@ -1,13 +1,13 @@
-from logic.ngboost_team import get_y_pred_percentile_api
-from logic.ngboost_team import load_ngboost_team_model
-from logic.today_games_preprocessor import preprocess_advanced
+from py_files.ngboost_team import get_y_pred_percentile_api
+from py_files.ngboost_team import load_ngboost_team_model
+from py_files.today_games_preprocessor import preprocess_advanced
 from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-file_path_model = 'data'/'pkl'/'ngdemo.pkl'
+file_path_model = 'data/pkl/ngdemo.pkl'
 app.state.model = load_ngboost_team_model(file_path_model)
 # Optional, good practice for dev purposes. Allow all middlewares
 app.add_middleware(
@@ -33,6 +33,8 @@ def predict(percentile_target=0.54):
 
 @app.get("/")
 def root():
-    # $CHA_BEGIN
     return dict(greeting="Hello")
-    # $CHA_END
+
+if __name__=='__main__':
+    y_json = predict(percentile_target=0.54)
+    print(y_json)
