@@ -4,7 +4,7 @@ import pandas as pd
 import time
 from datetime import datetime, timedelta
 def get_bets():
-    date = (datetime.utcnow() - timedelta(hours=9)).strftime('%Y-%m-%d')
+    date = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
 
     time.sleep(4)
     URL = f"https://www.sportsbookreview.com/betting-odds/nba-basketball/"
