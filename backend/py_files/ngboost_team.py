@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import pickle
-from pathlib import Path
 from ngboost import NGBRegressor
 from sklearn.tree import DecisionTreeRegressor
 from scipy.integrate import quad
@@ -111,8 +110,7 @@ def update_ngboost(X_train, y_train, file_path):
 def load_ngboost_team_model(file_path):
     '''use path.home to reach data/pkl folder, this returns the
     model from the pkl file'''
-    with file_path.open("rb") as f:
-        ngb_unpickled = pickle.load(f)
+    ngb_unpickled = pd.read_pickle(file_path)
     return ngb_unpickled
 
 def visualise_distribution(model, X_test, game_index:int):
@@ -191,8 +189,8 @@ def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentil
         x_max =110
     elif new_df == False:
         X, X_test, y, y_test = get_preproc_ngboost(file_path_df, split_date='2022-04-27 00:00:00')
-        x_min =min(y_test)
-        x_max =max(y_test)
+        x_min =-110
+        x_max =110
     model = load_ngboost_team_model(file_path_model)
     mean, std = get_mean_std_normal_distribution(model, X_test)
     for i in range(X_test.shape[0]):
@@ -222,8 +220,10 @@ def get_y_pred_percentile_from_df(df, file_path_model, percentile=0.54):
     return pd.merge(df_info, temp, on='GAME_ID')
 
 def get_y_pred_percentile_api(df, model, percentile=0.54):
-    '''get the y_pred in a neat package'''
-    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']]
+    '''get the y_pred in a neat package
+    For API do note instead of TEAM_NAME, TEAM_ABBREVIATION are used instead
+    Also this is used for today's current game data'''
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_ABBREVIATION_h','TEAM_ABBREVIATION_a']]
     left_cumsums = []
     right_cumsums = []
     X_test = get_new_preproc_df(df)
@@ -238,13 +238,42 @@ def get_y_pred_percentile_api(df, model, percentile=0.54):
     print('New y_pred DataFrame produced')
     return pd.merge(df_info, temp, on='GAME_ID')
 
+def get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=False, percentile=0.54):
+    '''get the y_pred in a neat package, with y_test'''
+    df = pd.read_pickle(file_path_df)
+    if 'PLUS_MINUS' not in df.columns:
+        return 'error PLUS_MINUS not found in df, get_y_pred_percentile or get_y_pred_percentile_from_df instead?'
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a', 'PLUS_MINUS']]
+    left_cumsums = []
+    right_cumsums = []
+    if new_df == True:
+        X_test = get_new_preproc_path(file_path_df)
+        x_min =-110
+        x_max =110
+    elif new_df == False:
+        X, X_test, y, y_test = get_preproc_ngboost(file_path_df, split_date='2022-04-27 00:00:00')
+        x_min =-110
+        x_max =110
+    model = load_ngboost_team_model(file_path_model)
+    mean, std = get_mean_std_normal_distribution(model, X_test)
+    for i in range(X_test.shape[0]):
+        left_cumsums.append(get_left_betting_metric(x_min, x_max, mean[i], std[i], percentile))
+        right_cumsums.append(get_right_betting_metric(x_min, x_max, mean[i], std[i], percentile))
+    temp = pd.DataFrame({f'left_{percentile}':left_cumsums,
+                         f'right_{percentile}': right_cumsums},index=X_test.index)
+    print('New y_pred DataFrame produced')
+    return pd.merge(df_info, temp, on='GAME_ID')
+
 
 if __name__ == "__main__":
     #GET THE MAIN BETTING ODDS
-    file_path_df = 'backend/data/pkl/ADV_OHE_TEAM_ALL'
-    file_path_model = Path.home()/'code'/'alecmatt5'/'nba_betting_analysis'/'backend'/'data'/'pkl'/'ngdemo.pkl'
-    y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
-    y_pred.to_pickle('y_pred.pkl')
+    file_path_df = 'data/pkl/ADV_OHE_TEAM_ALL'
+    file_path_model = 'data/pkl/ngdemo.pkl'
+    # y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
+    # y_pred.to_pickle('y_pred.pkl')
+
+    y_70 = get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=False, percentile=0.7)
+    y_70.to_pickle('data/pkl/y_pred_70.pkl')
 
 #     #=------------------------------------------TEST THE FUNCTIONS--------------------------------------------------
 #     path = '../data/pkl/ADV_OHE_TEAM_ALL'
