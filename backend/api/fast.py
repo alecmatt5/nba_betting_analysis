@@ -11,7 +11,7 @@ today_date = datetime.today().strftime('%Y-%m-%d')
 app = FastAPI()
 file_path_model = 'data/pkl/ngdemo.pkl'
 app.state.model = load_ngboost_team_model(file_path_model)
-app.state.df_app = pd.read_pickle(f'data/pkl/demo_{today_date}.pkl')
+app.state.df_app = pd.read_pickle(f'data/pkl/demo_{today_date}.pkl').reset_index()
 # app.state.df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
 #                                         roll_methods=['mean', 'median', 'std'],
 #                                         ohe=True,
@@ -41,3 +41,4 @@ def root():
 if __name__=='__main__':
     y_json = predict(percentile_target=0.54)
     print(y_json)
+    print(app.state.df_app)
