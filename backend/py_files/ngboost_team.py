@@ -146,6 +146,7 @@ def get_left_betting_metric(x_min, x_max, mean, std, percentile=0.54):
     (cumulative sum from the left side)'''
     x = np.linspace(x_min, x_max, 1000)
     cum_sum = scipy.stats.norm.cdf(x, mean, std)
+    cum_sum = np.around(cum_sum, decimals=2)
     bet_left = np.argwhere(np.isclose(cum_sum, percentile, rtol=0.05, atol=0.01))[0][0]
     return np.round(x[bet_left], 2)
 
@@ -154,6 +155,7 @@ def get_right_betting_metric(x_min, x_max, mean, std, percentile=0.54):
     (cumulative sum from the right side)'''
     x = np.linspace(x_min, x_max, 1000)
     cum_sum = scipy.stats.norm.cdf(x, mean, std)
+    cum_sum = np.around(cum_sum, decimals=2)
     bet_right = np.argwhere(np.isclose(1-cum_sum, percentile, rtol=0.05, atol=0.01))[0][0]
     return np.round(x[bet_right], 2)
 
