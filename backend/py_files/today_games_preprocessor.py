@@ -163,26 +163,26 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     advanced = pd.concat([advanced_today_df, advanced], ignore_index=True, sort=False)
     ############################################################################
 
-    games_df = pd.concat([games_today_df, games_df], ignore_index=True, sort=False)
+    # games_df = pd.concat([games_today_df, games_df], ignore_index=True, sort=False)
 
-    advanced_today_df = games_today_df
+    # advanced_today_df = games_today_df
 
-    columns = ['TEAM_NAME', 'OFF_RATING', 'DEF_RATING',
-    'NET_RATING', 'AST_PCT', 'AST_TOV',
-    'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'TM_TOV_PCT',
-    'EFG_PCT', 'TS_PCT', 'PACE',
-    'POSS']
+    # columns = ['TEAM_NAME', 'OFF_RATING', 'DEF_RATING',
+    # 'NET_RATING', 'AST_PCT', 'AST_TOV',
+    # 'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'TM_TOV_PCT',
+    # 'EFG_PCT', 'TS_PCT', 'PACE',
+    # 'POSS']
 
-    for column in columns:
-        advanced_today_df[column] = 0
+    # for column in columns:
+    #     advanced_today_df[column] = 0
 
-    advanced_today_df = advanced_today_df.reindex(columns=['GAME_ID', 'TEAM_ID', 'TEAM_NAME', 'TEAM_ABBREVIATION',
-                                                        'OFF_RATING', 'DEF_RATING',
-                                                        'NET_RATING', 'AST_PCT', 'AST_TOV',
-                                                        'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'TM_TOV_PCT',
-                                                        'EFG_PCT', 'TS_PCT', 'PACE', 'POSS'])
+    # advanced_today_df = advanced_today_df.reindex(columns=['GAME_ID', 'TEAM_ID', 'TEAM_NAME', 'TEAM_ABBREVIATION',
+    #                                                     'OFF_RATING', 'DEF_RATING',
+    #                                                     'NET_RATING', 'AST_PCT', 'AST_TOV',
+    #                                                     'OREB_PCT', 'DREB_PCT', 'REB_PCT', 'TM_TOV_PCT',
+    #                                                     'EFG_PCT', 'TS_PCT', 'PACE', 'POSS'])
 
-    advanced = pd.concat([advanced_today_df, advanced], ignore_index=True, sort=False)
+    # advanced = pd.concat([advanced_today_df, advanced], ignore_index=True, sort=False)
     ############################################################################
 
     #change game_id type to match between the 2 data frames
@@ -203,7 +203,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     advanced_desc = advanced.sort_values(by=['GAME_DATE'], ascending=True).copy()
 
     #define features to engineer
-    non_eng_features = ['TEAM_ABBREVIATION', 'GAME_ID', 'TEAM_ID', 'TEAM_NAME',
+    non_eng_features = ['TEAM_ABBREVIATION', 'TEAM_CITY', 'GAME_ID', 'TEAM_ID', 'TEAM_NAME',
                         'GAME_DATE', 'HOME_TEAM', 'PLUS_MINUS']
     eng_features = advanced_desc.drop(columns=non_eng_features).columns.tolist()
 
@@ -301,12 +301,11 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
 
 if __name__ == '__main__':
     today_date = datetime.today().strftime('%Y-%m-%d')
-    preproc_part1, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
+    preproc_part_today, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
                                         roll_methods=['mean', 'median', 'std'],
                                         ohe=True,
                                         scaled=False)
-
-    preproc_part1.to_pickle(f'data/pkl/demo_{today_date}.pkl')
+    preproc_part_today.to_pickle(f'data/pkl/demo_{today_date}_test.pkl')
 
 #     preproc_part2, X_features = preprocess_advanced('boxscores_advanced_team_part2.pkl',
 #                                         roll_methods=['mean'],
