@@ -29,26 +29,15 @@ with st.sidebar:
     Join our community of NBA enthusiasts and start predicting today.
     '''
 
-# get colors from theme config file, or set the colours to altair standards
-# if chck:
-#     primary_clr = st.get_option("theme.primaryColor")
-#     txt_clr = st.get_option("theme.textColor")
-#     # I want 3 colours to graph, so this is a red that matches the theme:
-#     second_clr = "#d87c7c"
-# else:
-#     primary_clr = '#4c78a8'
-#     second_clr = '#f58517'
-#     txt_clr = '#e45756'
-
 selected = option_menu(
     menu_title=None,
-    options=['Yesterday', 'Today', 'Tommorow'],
+    options=['Yesterday', 'Today'],
     default_index=1,
-    icons=['body-text','calendar3','calculator'],
+    icons=['calendar3','calculator'],
     orientation="horizontal"
 )
 
-games = pd.read_pickle('../backend/data/pkl/sbr_todays_betting_data.pkl')
+games = pd.read_pickle('../backend/data/pkl/sbr_today_betting_data.pkl')
 
 
 if selected == 'Yesterday':
@@ -65,37 +54,37 @@ if selected == 'Yesterday':
     st.write('You selected:', option)
 
 if selected == 'Today':
-
-    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10 = st.columns(10)
 
     with col1:
         show_Betmgm = st.checkbox('Betmgm', value=True)
-
-    with col2:
         show_Draft_Kings = st.checkbox('Draft_Kings', value=True)
-
-    with col3:
+    with col2:
         show_Fanduel = st.checkbox('Fanduel', value=True)
-
-    with col4:
         show_Caesars = st.checkbox('Caesars', value=True)
-
-    with col5:
+    with col3:
         show_Pointsbet = st.checkbox('Pointsbet', value=True)
-
-    with col6:
         show_Wynn = st.checkbox('Wynn', value=True)
-
-    with col7:
+    with col4:
         show_Betrivers = st.checkbox('Betrivers', value=True)
-
-
-
-    highlight = st.checkbox('Highlight', value=True)
+    with col5:
+        st.empty()
+    with col6:
+        st.empty()
+    with col7:
+        st.empty()
+    with col8:
+        st.empty()
+    with col9:
+        st.empty()
+    with col10:
+        highlight = st.checkbox('Highlight', value=True)
 
     def display_dataframe(show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers, highlight):
     # Hide the columns that are not selected
-        df = games
+        columns_to_drop = ['Game_Date', 'Home', 'Pct_of_Bets']
+        df = games.copy().drop(columns=columns_to_drop)
+        df = df.set_index('Team_Name')
 
         spread_subset=['Opening_Spread', 'Betmgm_Spread',
                 'Draft_Kings_Spread', 'Fanduel_Spread',
@@ -135,8 +124,6 @@ if selected == 'Today':
             spread_subset.remove('Betrivers_Spread')
             odds_subset.remove('Betrivers_Odds')
 
-        # Display the data frame with the selected columns using streamlit
-
         if highlight:
             st.write(df.style.highlight_max(subset=spread_subset,
                                             axis=1, color='grey')
@@ -162,39 +149,10 @@ if selected == 'Today':
     display_dataframe(button_1, button_2)
 
 
-if selected == 'Tommorow':
-    '''
-    # TaxiFareModel front
 
-    This front queries the Le Wagon [taxi fare model API](https://taxifare.lewagon.ai/predict?pickup_datetime=2012-10-06%2012:10:20&pickup_longitude=40.7614327&pickup_latitude=-73.9798156&dropoff_longitude=40.6513111&dropoff_latitude=-73.8803331&passenger_count=2)
-    '''
-
-    with st.form(key='params_for_api'):
-
-        pickup_date = st.date_input('pickup datetime', value=datetime.datetime(2012, 10, 6, 12, 10, 20))
-        pickup_time = st.time_input('pickup datetime', value=datetime.datetime(2012, 10, 6, 12, 10, 20))
-        pickup_datetime = f'{pickup_date} {pickup_time}'
-        pickup_longitude = st.number_input('pickup longitude', value=40.7614327)
-        pickup_latitude = st.number_input('pickup latitude', value=-73.9798156)
-        dropoff_longitude = st.number_input('dropoff longitude', value=40.6413111)
-        dropoff_latitude = st.number_input('dropoff latitude', value=-73.7803331)
-        passenger_count = st.number_input('passenger_count', min_value=1, max_value=8, step=1, value=1)
-
-        st.form_submit_button('Make prediction')
-
-    params = dict(
-        pickup_datetime=pickup_datetime,
-        pickup_longitude=pickup_longitude,
-        pickup_latitude=pickup_latitude,
-        dropoff_longitude=dropoff_longitude,
-        dropoff_latitude=dropoff_latitude,
-        passenger_count=passenger_count)
-
-    wagon_cab_api_url = 'https://taxifare.lewagon.ai/predict'
-    response = requests.get(wagon_cab_api_url, params=params)
+    nba_api_url = 'https://nba-betting-analysis-asoblteiuq-uc.a.run.app/predict?percentile_target=0.54'
+    response = requests.get(nba_api_url)
 
     prediction = response.json()
 
-    pred = prediction['fare']
-
-    st.header(f'Fare amount: ${round(pred, 2)}')
+    st.json(prediction)
