@@ -216,3 +216,5 @@ if __name__ == '__main__':
     # Overwrite old pickle file with updated preprocess data
 #     preproc.to_pickle('data/pkl/Adv_Preproc_Team.pkl')
 #     X_features.to_pickle('data/pkl/X_features_list.pkl'))
+
+print(preproc.GAME_DATE)
