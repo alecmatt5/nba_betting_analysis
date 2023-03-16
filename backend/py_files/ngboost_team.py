@@ -146,6 +146,7 @@ def get_left_betting_metric(x_min, x_max, mean, std, percentile=0.54):
     (cumulative sum from the left side)'''
     x = np.linspace(x_min, x_max, 1000)
     cum_sum = scipy.stats.norm.cdf(x, mean, std)
+    cum_sum = np.around(cum_sum, decimals=2)
     bet_left = np.argwhere(np.isclose(cum_sum, percentile, rtol=0.05, atol=0.01))[0][0]
     return np.round(x[bet_left], 2)
 
@@ -154,6 +155,7 @@ def get_right_betting_metric(x_min, x_max, mean, std, percentile=0.54):
     (cumulative sum from the right side)'''
     x = np.linspace(x_min, x_max, 1000)
     cum_sum = scipy.stats.norm.cdf(x, mean, std)
+    cum_sum = np.around(cum_sum, decimals=2)
     bet_right = np.argwhere(np.isclose(1-cum_sum, percentile, rtol=0.05, atol=0.01))[0][0]
     return np.round(x[bet_right], 2)
 
@@ -180,7 +182,7 @@ def get_betting_prediction(model, X_test, betting_plus_minus):
 def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54):
     '''get the y_pred in a neat package'''
     df = pd.read_pickle(file_path_df)
-    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']]
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']].copy()
     left_cumsums = []
     right_cumsums = []
     if new_df == True:
@@ -203,7 +205,7 @@ def get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentil
 
 def get_y_pred_percentile_from_df(df, file_path_model, percentile=0.54):
     '''get the y_pred in a neat package'''
-    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']]
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a']].copy()
     left_cumsums = []
     right_cumsums = []
     X_test = get_new_preproc_df(df)
@@ -223,7 +225,7 @@ def get_y_pred_percentile_api(df, model, percentile=0.54):
     '''get the y_pred in a neat package
     For API do note instead of TEAM_NAME, TEAM_ABBREVIATION are used instead
     Also this is used for today's current game data'''
-    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_ABBREVIATION_h','TEAM_ABBREVIATION_a']]
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_ABBREVIATION_h','TEAM_ABBREVIATION_a']].copy()
     left_cumsums = []
     right_cumsums = []
     X_test = get_new_preproc_df(df)
@@ -243,7 +245,7 @@ def get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=Fals
     df = pd.read_pickle(file_path_df)
     if 'PLUS_MINUS' not in df.columns:
         return 'error PLUS_MINUS not found in df, get_y_pred_percentile or get_y_pred_percentile_from_df instead?'
-    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a', 'PLUS_MINUS']]
+    df_info = df[['GAME_ID', 'GAME_DATE', 'TEAM_NAME_h', 'TEAM_NAME_a', 'PLUS_MINUS']].copy()
     left_cumsums = []
     right_cumsums = []
     if new_df == True:
@@ -267,13 +269,12 @@ def get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=Fals
 
 if __name__ == "__main__":
     #GET THE MAIN BETTING ODDS
-    file_path_df = 'data/pkl/ADV_OHE_TEAM_ALL'
+    file_path_df = 'data/pkl/demo_2023-03-16.pkl'
     file_path_model = 'data/pkl/ngdemo.pkl'
     # y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
     # y_pred.to_pickle('y_pred.pkl')
 
     y_70 = get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=False, percentile=0.7)
-    y_70.to_pickle('data/pkl/y_pred_70.pkl')
 
 #     #=------------------------------------------TEST THE FUNCTIONS--------------------------------------------------
 #     path = '../data/pkl/ADV_OHE_TEAM_ALL'
