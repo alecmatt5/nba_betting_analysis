@@ -283,10 +283,14 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], ohe=True, sc
     return preproc_data , X_features
 
 if __name__ == '__main__':
+    today_date = datetime.today().strftime('%Y-%m-%d')
     preproc_part1, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
-                                        roll_methods=['mean'],
+                                        roll_methods=['mean', 'median', 'std'],
                                         ohe=True,
                                         scaled=False)
+
+    preproc_part1.to_pickle(f'data/pkl/demo_{today_date}.pkl')
+
 #     preproc_part2, X_features = preprocess_advanced('boxscores_advanced_team_part2.pkl',
 #                                         roll_methods=['mean'],
 #                                         ohe=True,

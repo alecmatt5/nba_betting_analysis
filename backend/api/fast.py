@@ -5,14 +5,17 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
+today_date = datetime.today().strftime('%Y-%m-%d')
 app = FastAPI()
 file_path_model = 'data/pkl/ngdemo.pkl'
 app.state.model = load_ngboost_team_model(file_path_model)
-app.state.df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
-                                        roll_methods=['mean', 'median', 'std'],
-                                        ohe=True,
-                                        scaled=False)
+app.state.df_app = pd.read_pickle(f'data/pkl/demo_{today_date}.pkl')
+# app.state.df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
+#                                         roll_methods=['mean', 'median', 'std'],
+#                                         ohe=True,
+#                                         scaled=False)
 # Optional, good practice for dev purposes. Allow all middlewares
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +35,8 @@ def predict(percentile_target=0.54):
 
 @app.get("/")
 def root():
-    return dict(greeting="Hello")
+    X_json = app.state.df_app.to_dict()
+    return X_json
 
 if __name__=='__main__':
     y_json = predict(percentile_target=0.54)

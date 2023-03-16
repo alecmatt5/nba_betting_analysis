@@ -6,6 +6,7 @@ COPY api api
 COPY py_files py_files
 COPY data/pkl/ngdemo.pkl data/pkl/ngdemo.pkl
 COPY data/pkl/boxscores_advanced_team_all.pkl data/pkl/boxscores_advanced_team_all.pkl
+COPY data/pkl/demo_test.pkl data/pkl/demo_test.pkl
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
