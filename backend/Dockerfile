@@ -1,6 +1,6 @@
 FROM python:3.9.16-buster
 
-COPY requirements.txt requirements.txt
+COPY requirements_testing.txt requirements.txt
 RUN mkdir -p data/pkl
 COPY api api
 COPY py_files py_files
