@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 file_path_model = 'data/pkl/ngdemo.pkl'
 app.state.model = load_ngboost_team_model(file_path_model)
-df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
+app.state.df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
                                         roll_methods=['mean', 'median', 'std'],
                                         ohe=True,
                                         scaled=False)
@@ -24,7 +24,7 @@ app.add_middleware(
 @app.get("/predict")
 def predict(percentile_target=0.54):
     model = app.state.model
-    y_pred = get_y_pred_percentile_api(df_app, model,
+    y_pred = get_y_pred_percentile_api(app.state.df_app, model,
                                             percentile=percentile_target)
     y_json = y_pred.to_dict()
     return y_json
