@@ -272,8 +272,8 @@ if __name__ == "__main__":
     # y_pred = get_y_pred_percentile(file_path_df, file_path_model, new_df=False, percentile=0.54)
     # y_pred.to_pickle('y_pred.pkl')
 
-    y_60 = get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=False, percentile=0.6)
-    y_60.to_pickle('y_pred_60.pkl')
+    y_70 = get_y_pred_percentile_with_y_test(file_path_df, file_path_model, new_df=False, percentile=0.7)
+    y_70.to_pickle('data/pkl/y_pred_70.pkl')
 #     #=------------------------------------------TEST THE FUNCTIONS--------------------------------------------------
 #     path = '../data/pkl/ADV_OHE_TEAM_ALL'
 #     #get data
