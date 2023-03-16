@@ -28,6 +28,7 @@ app.add_middleware(
 )
 @app.get("/predict")
 def predict(percentile_target=0.54):
+    percentile_target = float(percentile_target)
     model = app.state.model
     df_app=app.state.df_app.copy()
     y_pred = get_y_pred_percentile_api(df_app, model,
