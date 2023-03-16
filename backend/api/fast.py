@@ -6,12 +6,14 @@ import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+import glob
 
-today_date = datetime.today().strftime('%Y-%m-%d')
+#today_date = datetime.today().strftime('%Y-%m-%d')
+today_date = glob.glob('data/pkl/demo*.pkl')[0]
 app = FastAPI()
 file_path_model = 'data/pkl/ngdemo.pkl'
 app.state.model = load_ngboost_team_model(file_path_model)
-app.state.df_app = pd.read_pickle(f'data/pkl/demo_{today_date}.pkl').copy()
+app.state.df_app = pd.read_pickle(today_date).copy()
 # app.state.df_app, X_features = preprocess_advanced('boxscores_advanced_team_all.pkl',
 #                                         roll_methods=['mean', 'median', 'std'],
 #                                         ohe=True,
@@ -40,7 +42,8 @@ def root():
     return X_json
 
 if __name__=='__main__':
-    #print(app.state.df_app)
+    print(app.state.df_app)
     y_json = predict(percentile_target=0.54)
     print(app.state.df_app)
-    #print(y_json)
+    print(y_json)
+    #print(root)
