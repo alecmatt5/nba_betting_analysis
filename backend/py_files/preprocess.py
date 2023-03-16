@@ -206,9 +206,6 @@ if __name__ == '__main__':
                                         roll_number=8,
                                         ohe=True,
                                         scaled=False)
-#     preproc_part2, X_features = preprocess_advanced('boxscores_advanced_team_part2.pkl',
-#                                         roll_methods=['mean'],
-#                                         ohe=True,
-#                                         scaled=False)
-#     preproc_all = pd.concat([preproc_part1, preproc_part2]).reset_index(drop=True)
-#     preproc_all.to_pickle('data/pkl/alec_test_data.pkl')
+    # Overwrite old pickle file with updated preprocess data
+#     preproc.to_pickle('data/pkl/Adv_Preproc_Team.pkl')
+#     X_features.to_pickle('data/pkl/X_features_list.pkl'))

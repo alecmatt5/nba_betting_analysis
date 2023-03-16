@@ -85,12 +85,8 @@ def get_bets():
 
     #betting_df.reset_index(drop=True, inplace=True)
     #betting_df.to_pickle('sbr_betting_data.pkl')
-
-    #TEMPORARY!!!
-    betting_df.to_pickle(f'sbr_current_betting_data_{date}.pkl')
-
+    betting_df.to_pickle('data/pkl/sbr_today_betting_data.pkl')
     return betting_df
 
-#TEMPORARY!!!
-# if __name__ == '__main__':
-#     get_bets()
+if __name__ == '__main__':
+    get_bets()
