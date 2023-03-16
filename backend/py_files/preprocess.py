@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 #     else:
 #         return None
 
-def get_basic_boxscores(date="2018-09-01"):
+def get_basic_boxscores(date="2018-09-01", today=False):
     nba_teams = teams.get_teams()
     team_names = [team['full_name'] for team in nba_teams]
     team_names.sort()
@@ -34,9 +34,13 @@ def get_basic_boxscores(date="2018-09-01"):
     games.GAME_ID = pd.to_numeric(games.GAME_ID, downcast='integer')
     games.GAME_DATE = pd.to_datetime(games.GAME_DATE, infer_datetime_format=True)
 
-    today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
-    games = games[games['GAME_DATE'] < today]
-    games = games[games['GAME_DATE'] > date].sort_values(by='GAME_DATE', ascending=False)
+    if today == True:
+        today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
+        games = games[games['GAME_DATE'] == today]
+    else:
+        today = (datetime.utcnow() - timedelta(hours=4)).strftime('%Y-%m-%d')
+        games = games[games['GAME_DATE'] < today]
+        games = games[games['GAME_DATE'] > date].sort_values(by='GAME_DATE', ascending=False)
 
     games.reset_index(drop=True, inplace=True)
 
@@ -88,7 +92,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], roll_number=
     # advanced = pd.read_pickle('data/pkl/boxscores_advanced_team_all.pkl')
 
     #drop unecessary columns
-    columns_to_drop = ['TEAM_CITY', 'MIN', 'E_OFF_RATING', 'E_DEF_RATING',
+    columns_to_drop = ['MIN', 'E_OFF_RATING', 'E_DEF_RATING',
                    'E_NET_RATING', 'AST_RATIO', 'E_TM_TOV_PCT', 'USG_PCT',
                    'E_USG_PCT', 'E_PACE', 'PACE_PER40', 'PIE']
     advanced = advanced.drop(columns=columns_to_drop)
@@ -160,6 +164,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], roll_number=
     #make lists of feature column names
     X_features_num = [col for col in merged_df.columns if 'GAME_ID' not in col
                      and 'GAME_DATE' not in col
+                     and 'TEAM_CITY' not in col
                      and 'TEAM_ID' not in col
                      and 'TEAM_NAME' not in col
                      and 'TEAM_ABBREVIATION' not in col
@@ -181,6 +186,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], roll_number=
         preproc_data[cols]=ohe.transform(preproc_data[X_features_cat])
         X_features = [col for col in preproc_data.columns if 'GAME_ID' not in col
                      and 'GAME_DATE' not in col
+                     and 'TEAM_CITY' not in col
                      and 'TEAM_ID' not in col
                      and 'TEAM_NAME' not in col
                      and 'TEAM_ABBREVIATION' not in col
@@ -191,6 +197,7 @@ def preprocess_advanced(adv_pickle_filename, roll_methods=['mean'], roll_number=
                      and 'GAME_DATE' not in col
                      and 'TEAM_ID' not in col
                      and 'TEAM_NAME' not in col
+                     and 'TEAM_ABBREVIATION' not in col
                      and 'PLUS_MINUS' not in col
                      and 'HOME_TEAM' not in col]
 
