@@ -31,7 +31,7 @@ with st.sidebar:
     '''
 
 
-st.image('images/logo1.png', width=200)
+# st.image('images/logo1.png', width=200)
 selected = option_menu(
     menu_title=None,
     options=['Yesterday', 'Today'],
@@ -58,7 +58,7 @@ results = ["", "Loss", "", "", "", "", "Win", "", "", ""]
 df_yesterday["Outcome"] = outcome
 df_yesterday["Results"] = results
 
-col1, col2, col3, col4, col5, col6, col7, col8, col9, col10 = st.columns(10)
+col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
 
 with col1:
     show_Betmgm = st.checkbox('Betmgm', value=True)
@@ -78,10 +78,6 @@ with col6:
 with col7:
     st.empty()
 with col8:
-    st.empty()
-with col9:
-    st.empty()
-with col10:
     highlight = st.checkbox('Highlight', value=True)
 
 
@@ -130,15 +126,19 @@ def display_dataframe(df, show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caes
         # spread_subset.remove('Betrivers_Spread')
         odds_subset.remove('Betrivers_Odds')
 
-    teams_to_bet_on = df.index[df['Bet'] == True].tolist()
+    float_cols = df.select_dtypes(include=['float32', 'float64']).columns.tolist()
+    format_dict = {}
+    for i in float_cols:
+        format_dict[i] = "{:.2f}"
+
     if highlight:
-        # teams_to_bet_on = df.index[df['Bet'] == True].tolist()
-        st.write(df.style.highlight_max(subset=pd.IndexSlice[teams_to_bet_on, ['Predictions']],
+        teams_to_bet_on = df.index[df['Bet'] == True].tolist()
+        st.write(df.style.format(format_dict).highlight_max(subset=pd.IndexSlice[teams_to_bet_on, ['Predictions']],
                                         axis=1, color='grey')
                 .highlight_min(subset=pd.IndexSlice[teams_to_bet_on, odds_subset],
                                         axis=1, color='brown'), height=36*(df.shape[0]+1))
     else:
-        st.write(df, height=36*(df.shape[0]+1))
+        st.write(df.style.format(format_dict), height=36*(df.shape[0]+1))
 
     # if highlight:
     #     st.dataframe(df.style.highlight_max(subset=spread_subset,
