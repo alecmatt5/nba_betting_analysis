@@ -134,7 +134,7 @@ def display_dataframe(df, show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caes
         teams_to_bet_on = df.index[df['Bet'] == True].tolist()
         st.write(df.style.format(format_dict).highlight_max(subset=pd.IndexSlice[teams_to_bet_on, ['Predictions']],
                                         axis=1, color='grey')
-                .highlight_min(subset=pd.IndexSlice[teams_to_bet_on, odds_subset],
+                .highlight_max(subset=pd.IndexSlice[teams_to_bet_on, odds_subset],
                                         axis=1, color='brown'), height=36*(df.shape[0]+1))
     else:
         st.write(df.style.format(format_dict), height=36*(df.shape[0]+1))
