@@ -17,6 +17,7 @@ st.set_page_config(layout="wide",
 with st.sidebar:
     # "Use the widgets to alter the graphs:"
     # chck = st.sidebar.checkbox("Use your theme colours on graphs", value=True) # get colours for graphs
+
     '''
     # PROJECT OVERVIEW
 
@@ -29,6 +30,8 @@ with st.sidebar:
     Join our community of NBA enthusiasts and start predicting today.
     '''
 
+
+st.image('images/logo1.png', width=200)
 selected = option_menu(
     menu_title=None,
     options=['Yesterday', 'Today'],
@@ -37,8 +40,8 @@ selected = option_menu(
     orientation="horizontal"
 )
 
-games_yesterday = pd.read_pickle('../backend/data/pkl/betting_predictions_2023-03-16.pkl')
-games_today = pd.read_pickle('../backend/data/pkl/betting_predictions_2023-03-17.pkl')
+games_yesterday = pd.read_pickle('pkl/betting_predictions_2023-03-16.pkl')
+games_today = pd.read_pickle('pkl/betting_predictions_2023-03-17.pkl')
 
 def preprocess(df):
     columns_to_drop = ['Game_Date', 'Home', 'Pct_of_Bets']
@@ -84,60 +87,66 @@ with col10:
 
 def display_dataframe(df, show_Betmgm, show_Draft_Kings, show_Fanduel, show_Caesars, show_Pointsbet, show_Wynn, show_Betrivers, highlight):
 
-    spread_subset=['Opening_Spread', 'Betmgm_Spread',
-            'Draft_Kings_Spread', 'Fanduel_Spread',
-            'Caesars_Spread', 'Pointsbet_Spread',
-            'Wynn_Spread', 'Betrivers_Spread',]
-    odds_subset=['Opening_Odds', 'Betmgm_Odds',
+    # spread_subset=['Opening_Spread', 'Betmgm_Spread',
+    #         'Draft_Kings_Spread', 'Fanduel_Spread',
+    #         'Caesars_Spread', 'Pointsbet_Spread',
+    #         'Wynn_Spread', 'Betrivers_Spread',]
+    # odds_subset=['Opening_Odds', 'Betmgm_Odds',
+    #         'Draft_Kings_Odds', 'Fanduel_Odds',
+    #         'Caesars_Odds', 'Pointsbet_Odds',
+    #         'Wynn_Odds', 'Betrivers_Odds']
+    odds_subset=['Betmgm_Odds',
             'Draft_Kings_Odds', 'Fanduel_Odds',
             'Caesars_Odds', 'Pointsbet_Odds',
             'Wynn_Odds', 'Betrivers_Odds']
 
+
     if not show_Betmgm:
         df.drop(['Betmgm_Spread', 'Betmgm_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Betmgm_Spread')
+        # spread_subset.remove('Betmgm_Spread')
         odds_subset.remove('Betmgm_Odds')
     if not show_Draft_Kings:
         df.drop(['Draft_Kings_Spread', 'Draft_Kings_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Draft_Kings_Spread')
+        # spread_subset.remove('Draft_Kings_Spread')
         odds_subset.remove('Draft_Kings_Odds')
     if not show_Fanduel:
         df.drop(['Fanduel_Spread', 'Fanduel_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Fanduel_Spread')
+        # spread_subset.remove('Fanduel_Spread')
         odds_subset.remove('Fanduel_Odds')
     if not show_Caesars:
         df.drop(['Caesars_Spread', 'Caesars_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Caesars_Spread')
+        # spread_subset.remove('Caesars_Spread')
         odds_subset.remove('Caesars_Odds')
     if not show_Pointsbet:
         df.drop(['Pointsbet_Spread', 'Pointsbet_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Pointsbet_Spread')
+        # spread_subset.remove('Pointsbet_Spread')
         odds_subset.remove('Pointsbet_Odds')
     if not show_Wynn:
         df.drop(['Wynn_Spread', 'Wynn_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Wynn_Spread')
+        # spread_subset.remove('Wynn_Spread')
         odds_subset.remove('Wynn_Odds')
     if not show_Betrivers:
         df.drop(['Betrivers_Spread', 'Betrivers_Odds'], axis=1, inplace=True)
-        spread_subset.remove('Betrivers_Spread')
+        # spread_subset.remove('Betrivers_Spread')
         odds_subset.remove('Betrivers_Odds')
 
+    teams_to_bet_on = df.index[df['Bet'] == True].tolist()
+    if highlight:
+        # teams_to_bet_on = df.index[df['Bet'] == True].tolist()
+        st.write(df.style.highlight_max(subset=pd.IndexSlice[teams_to_bet_on, ['Predictions']],
+                                        axis=1, color='grey')
+                .highlight_min(subset=pd.IndexSlice[teams_to_bet_on, odds_subset],
+                                        axis=1, color='brown'), height=36*(df.shape[0]+1))
+    else:
+        st.write(df, height=36*(df.shape[0]+1))
+
     # if highlight:
-    #     # teams_to_bet_on = df.index[df['Bet'] == True].tolist()
-    #     st.write(df.style.highlight_max(subset=[['Detroit', 'Indiana'], ['Predictions']],
+    #     st.dataframe(df.style.highlight_max(subset=spread_subset,
     #                                     axis=1, color='grey')
     #             .highlight_min(subset=odds_subset,
     #                                     axis=1, color='brown'), height=36*(df.shape[0]+1))
     # else:
-    #     st.write(df, height=36*(df.shape[0]+1))
-
-    if highlight:
-        st.dataframe(df.style.highlight_max(subset=spread_subset,
-                                        axis=1, color='grey')
-                .highlight_min(subset=odds_subset,
-                                        axis=1, color='brown'), height=36*(df.shape[0]+1))
-    else:
-        st.dataframe(df, height=36*(df.shape[0]+1))
+    #     st.dataframe(df, height=36*(df.shape[0]+1))
 
 if selected == 'Yesterday':
     # Call the display_dataframe function with the current states of the checkboxes as arguments
