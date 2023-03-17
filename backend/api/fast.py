@@ -10,7 +10,7 @@ from datetime import datetime
 import glob
 
 #today_date = datetime.today().strftime('%Y-%m-%d')
-today_date = glob.glob('data/pkl/demo*.pkl')[-1]
+today_date = glob.glob('data/pkl/demo*.pkl')[0]
 print(today_date)
 app = FastAPI()
 file_path_model = 'data/pkl/ngdemo.pkl'
@@ -58,8 +58,9 @@ def root():
     return X_json
 
 if __name__=='__main__':
+    todays_game = datetime.today().strftime('%Y-%m-%d')
     print(app.state.df_app)
     y_json = predict(percentile_target=0.6)
     print(y_json)
-    y_json.to_pickle('data/pkl/DEMO_PRED.pkl')
+    y_json.to_pickle(f'data/pkl/DEMO_PRED_{todays_game}.pkl')
     #print(root)
