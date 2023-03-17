@@ -305,7 +305,7 @@ if __name__ == '__main__':
                                         roll_methods=['mean', 'median', 'std'],
                                         ohe=True,
                                         scaled=False)
-    preproc_part_today.to_pickle(f'data/pkl/demo_{today_date}_test.pkl')
+    preproc_part_today.to_pickle(f'data/pkl/demo_{today_date}.pkl')
 
 #     preproc_part2, X_features = preprocess_advanced('boxscores_advanced_team_part2.pkl',
 #                                         roll_methods=['mean'],
