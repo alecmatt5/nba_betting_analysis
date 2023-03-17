@@ -7,6 +7,9 @@ import numpy as np
 import datetime
 import requests
 
+games_yesterday = pd.read_pickle('betting_predictions_2023-03-16.pkl')
+games_today = pd.read_pickle('betting_predictions_2023-03-17.pkl')
+
 st.set_page_config(layout="wide",
                    page_title="NBA betting analysis",
                    initial_sidebar_state="expanded",
@@ -38,8 +41,6 @@ selected = option_menu(
     orientation="horizontal"
 )
 
-games_yesterday = pd.read_pickle('betting_predictions_2023-03-16.pkl')
-games_today = pd.read_pickle('betting_predictions_2023-03-17.pkl')
 
 def preprocess(df):
     columns_to_drop = ['Game_Date', 'Home', 'Pct_of_Bets']
