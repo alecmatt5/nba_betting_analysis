@@ -30,8 +30,6 @@ with st.sidebar:
     Join our community of NBA enthusiasts and start predicting today.
     '''
 
-
-# st.image('images/logo1.png', width=200)
 selected = option_menu(
     menu_title=None,
     options=['Yesterday', 'Today'],
@@ -40,8 +38,8 @@ selected = option_menu(
     orientation="horizontal"
 )
 
-games_yesterday = pd.read_pickle('pkl/betting_predictions_2023-03-16.pkl')
-games_today = pd.read_pickle('pkl/betting_predictions_2023-03-17.pkl')
+games_yesterday = pd.read_pickle('betting_predictions_2023-03-16.pkl')
+games_today = pd.read_pickle('betting_predictions_2023-03-17.pkl')
 
 def preprocess(df):
     columns_to_drop = ['Game_Date', 'Home', 'Pct_of_Bets']
